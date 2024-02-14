@@ -42,6 +42,6 @@ public class DatalogController {
         var taskGroup = this.taskGroupRepository.findById(taskGroupId).orElseThrow(() -> new EntityNotFoundException("Datalog facts not found."));
         return ResponseEntity.ok()
             .contentType(MediaType.TEXT_PLAIN)
-            .body(taskGroup.getFacts());
+            .body(taskGroup.getDiagnoseFacts());
     }
 }

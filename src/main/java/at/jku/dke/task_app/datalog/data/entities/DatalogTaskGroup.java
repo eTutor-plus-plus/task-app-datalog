@@ -14,8 +14,12 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "task_group")
 public class DatalogTaskGroup extends BaseTaskGroup {
     @NotNull
-    @Column(name = "facts", nullable = false)
-    private String facts;
+    @Column(name = "diagnose_facts", nullable = false)
+    private String diagnoseFacts;
+
+    @NotNull
+    @Column(name = "submission_facts", nullable = false)
+    private String submissionFacts;
 
     /**
      * Creates a new instance of class {@link DatalogTaskGroup}.
@@ -26,50 +30,74 @@ public class DatalogTaskGroup extends BaseTaskGroup {
     /**
      * Creates a new instance of class {@link DatalogTaskGroup}.
      *
-     * @param facts The datalog facts.
+     * @param diagnoseFacts   The diagnose datalog-facts.
+     * @param submissionFacts The submission datalog-facts.
      */
-    public DatalogTaskGroup(String facts) {
-        this.facts = facts;
+    public DatalogTaskGroup(String diagnoseFacts, String submissionFacts) {
+        this.diagnoseFacts = diagnoseFacts;
+        this.submissionFacts = submissionFacts;
     }
 
     /**
      * Creates a new instance of class {@link DatalogTaskGroup}.
      *
-     * @param status The status.
-     * @param facts  The datalog facts.
+     * @param status          The status.
+     * @param diagnoseFacts   The diagnose datalog-facts.
+     * @param submissionFacts The submission datalog-facts.
      */
-    public DatalogTaskGroup(TaskStatus status, String facts) {
+    public DatalogTaskGroup(TaskStatus status, String diagnoseFacts, String submissionFacts) {
         super(status);
-        this.facts = facts;
+        this.diagnoseFacts = diagnoseFacts;
+        this.submissionFacts = submissionFacts;
     }
 
     /**
      * Creates a new instance of class {@link DatalogTaskGroup}.
      *
-     * @param id     The id.
-     * @param status The status.
-     * @param facts  The datalog facts.
+     * @param id              The id.
+     * @param status          The status.
+     * @param diagnoseFacts   The diagnose datalog-facts.
+     * @param submissionFacts The submission datalog-facts.
      */
-    public DatalogTaskGroup(Long id, TaskStatus status, String facts) {
+    public DatalogTaskGroup(Long id, TaskStatus status, String diagnoseFacts, String submissionFacts) {
         super(id, status);
-        this.facts = facts;
+        this.diagnoseFacts = diagnoseFacts;
+        this.submissionFacts = submissionFacts;
     }
 
     /**
-     * Gets the datalog facts.
+     * Returns the diagnose datalog-facts.
      *
-     * @return The datalog facts.
+     * @return The diagnose datalog-facts.
      */
-    public String getFacts() {
-        return facts;
+    public String getDiagnoseFacts() {
+        return diagnoseFacts;
     }
 
     /**
-     * Sets the datalog facts.
+     * Sets the diagnose datalog-facts.
      *
-     * @param facts The datalog facts.
+     * @param diagnoseFacts The diagnose datalog-facts.
      */
-    public void setFacts(String facts) {
-        this.facts = facts;
+    public void setDiagnoseFacts(String diagnoseFacts) {
+        this.diagnoseFacts = diagnoseFacts;
+    }
+
+    /**
+     * Returns the submission datalog-facts.
+     *
+     * @return The submission datalog-facts.
+     */
+    public String getSubmissionFacts() {
+        return submissionFacts;
+    }
+
+    /**
+     * Sets the submission datalog-facts.
+     *
+     * @param submissionFacts The submission datalog-facts.
+     */
+    public void setSubmissionFacts(String submissionFacts) {
+        this.submissionFacts = submissionFacts;
     }
 }

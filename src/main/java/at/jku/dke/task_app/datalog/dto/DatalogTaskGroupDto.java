@@ -7,7 +7,8 @@ import java.io.Serializable;
 /**
  * DTO for {@link at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup}
  *
- * @param facts The datalog facts.
+ * @param diagnoseFacts   The diagnose datalog facts.
+ * @param submissionFacts The submission datalog facts.
  */
-public record DatalogTaskGroupDto(@NotNull String facts) implements Serializable {
+public record DatalogTaskGroupDto(@NotNull String diagnoseFacts, @NotNull String submissionFacts) implements Serializable {
 }

@@ -6,9 +6,10 @@ CREATE CAST (CHARACTER VARYING as submission_mode) WITH INOUT AS IMPLICIT;
 
 CREATE TABLE task_group
 (
-    id     BIGINT      NOT NULL,
-    status TASK_STATUS NOT NULL,
-    facts  TEXT        NOT NULL,
+    id               BIGINT      NOT NULL,
+    status           TASK_STATUS NOT NULL,
+    diagnose_facts   TEXT        NOT NULL,
+    submission_facts TEXT        NOT NULL,
     CONSTRAINT task_group_pk PRIMARY KEY (id)
 );
 

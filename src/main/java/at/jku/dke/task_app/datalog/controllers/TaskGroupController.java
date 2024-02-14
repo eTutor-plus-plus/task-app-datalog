@@ -24,7 +24,7 @@ public class TaskGroupController extends BaseTaskGroupController<DatalogTaskGrou
 
     @Override
     protected DatalogTaskGroupDto mapToDto(DatalogTaskGroup taskGroup) {
-        return new DatalogTaskGroupDto(taskGroup.getFacts());
+        return new DatalogTaskGroupDto(taskGroup.getDiagnoseFacts(), taskGroup.getSubmissionFacts());
     }
 
 }

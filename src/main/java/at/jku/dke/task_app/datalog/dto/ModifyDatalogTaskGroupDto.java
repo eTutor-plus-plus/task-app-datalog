@@ -7,7 +7,8 @@ import java.io.Serializable;
 /**
  * This class represents a data transfer object for modifying a datalog task group.
  *
- * @param facts The datalog facts.
+ * @param diagnoseFacts   The diagnose datalog facts.
+ * @param submissionFacts The submission datalog facts.
  */
-public record ModifyDatalogTaskGroupDto(@NotNull String facts) implements Serializable {
+public record ModifyDatalogTaskGroupDto(@NotNull String diagnoseFacts, @NotNull String submissionFacts) implements Serializable {
 }

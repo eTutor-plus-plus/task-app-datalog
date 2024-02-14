@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * This class provides methods for managing {@link DatalogTaskGroup}s.
@@ -43,25 +45,31 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     protected DatalogTaskGroup createTaskGroup(long id, ModifyTaskGroupDto<ModifyDatalogTaskGroupDto> modifyTaskGroupDto) {
         if (!modifyTaskGroupDto.taskGroupType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task group type.");
-        this.validate(modifyTaskGroupDto.additionalData().facts());
-        return new DatalogTaskGroup(modifyTaskGroupDto.additionalData().facts());
+
+        this.validate("diagnose", modifyTaskGroupDto.additionalData().diagnoseFacts());
+        this.validate("submit", modifyTaskGroupDto.additionalData().submissionFacts());
+
+        return new DatalogTaskGroup(modifyTaskGroupDto.additionalData().diagnoseFacts(), modifyTaskGroupDto.additionalData().submissionFacts());
     }
 
     @Override
     protected void updateTaskGroup(DatalogTaskGroup taskGroup, ModifyTaskGroupDto<ModifyDatalogTaskGroupDto> modifyTaskGroupDto) {
         if (!modifyTaskGroupDto.taskGroupType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task group type.");
-        if (taskGroup.getFacts().equals(modifyTaskGroupDto.additionalData().facts()))
-            return;
 
-        this.validate(modifyTaskGroupDto.additionalData().facts());
-        taskGroup.setFacts(modifyTaskGroupDto.additionalData().facts());
+        if (!taskGroup.getDiagnoseFacts().equals(modifyTaskGroupDto.additionalData().diagnoseFacts()))
+            this.validate("diagnose", modifyTaskGroupDto.additionalData().diagnoseFacts());
+        if (!taskGroup.getSubmissionFacts().equals(modifyTaskGroupDto.additionalData().submissionFacts()))
+            this.validate("submit", modifyTaskGroupDto.additionalData().submissionFacts());
+
+        taskGroup.setDiagnoseFacts(modifyTaskGroupDto.additionalData().diagnoseFacts());
+        taskGroup.setSubmissionFacts(modifyTaskGroupDto.additionalData().submissionFacts());
     }
 
     @Override
     protected TaskGroupModificationResponseDto mapToReturnData(DatalogTaskGroup taskGroup, boolean create) {
         StringBuilder list = new StringBuilder("<ul>");
-        try (var r = new StringReader(taskGroup.getFacts())) {
+        try (var r = new StringReader(taskGroup.getDiagnoseFacts())) {
             var tokenizer = new DatalogTokenizer(r);
             var clauses = DatalogParser.parseProgram(tokenizer);
 
@@ -92,16 +100,17 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     /**
      * Validates the given facts.
      *
+     * @param part  The part from which the facts are (used for error message).
      * @param facts The facts to validate.
      * @throws ValidationException If the facts are not a valid datalog program.
      */
-    private void validate(String facts) {
+    private void validate(String part, String facts) {
         try (var r = new StringReader(facts)) {
             var tokenizer = new DatalogTokenizer(r);
             DatalogParser.parseProgram(tokenizer);
         } catch (DatalogParseException ex) {
-            LOG.warn("Failed to parse datalog program.", ex);
-            throw new ValidationException("Invalid datalog program: " + ex.getMessage());
+            LOG.warn("Failed to parse " + part + " datalog program.", ex);
+            throw new ValidationException("Invalid " + part + " datalog program: " + ex.getMessage());
         }
     }
 }

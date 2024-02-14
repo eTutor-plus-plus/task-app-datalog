@@ -1,5 +1,6 @@
 package at.jku.dke.task_app.datalog.evaluation;
 
+import at.jku.dke.etutor.task_app.dto.CriterionDto;
 import at.jku.dke.etutor.task_app.dto.GradingDto;
 import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
@@ -12,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Service that evaluates submissions.
@@ -48,6 +52,10 @@ public class EvaluationService {
 
         // evaluate input
         LOG.info("Evaluating input for task {} with mode {} and feedback-level {}", submission.taskId(), submission.mode(), submission.feedbackLevel());
+        Locale locale = Locale.of(submission.language());
+        BigDecimal points = BigDecimal.ZERO;
+        List<CriterionDto> criteria = new ArrayList<>();
+        String feedback = this.messageSource.getMessage("incorrect", null, locale);
 
         return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, null, Collections.emptyList());
     }
