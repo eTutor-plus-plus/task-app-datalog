@@ -1,6 +1,6 @@
 {
-    "name": "etutor-task-app-binary-search",
-    "version": "0.0.3",
+    "name": "etutor-task-app-datalog",
+    "version": "0.0.1",
     "private": true,
     "scripts": {
         "commit": "cz",

@@ -11,11 +11,11 @@
     </parent>
 
     <groupId>at.jku.dke.etutor</groupId>
-    <artifactId>task-app-binary-search</artifactId>
-    <version>0.0.3</version>
+    <artifactId>task-app-datalog</artifactId>
+    <version>0.0.1</version>
 
-    <name>eTutor Task-App: Binary Search</name>
-    <description>eTutor Task-App for task type "binary-search"</description>
+    <name>eTutor Task-App: Datalog</name>
+    <description>eTutor Task-App for task type "datalog"</description>
     <packaging>jar</packaging>
 
     <properties>
@@ -24,6 +24,13 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>local-maven-repo</id>
+            <url>file:///${project.basedir}/local-repo</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -55,6 +62,18 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Other -->
+        <dependency>
+            <groupId>org.sqids</groupId>
+            <artifactId>sqids</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.HarvardPL</groupId>
+            <artifactId>AbcDatalog</artifactId>
+            <version>v0.7.0</version>
         </dependency>
 
         <!-- Spring Dev -->

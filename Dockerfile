@@ -21,10 +21,10 @@ ENV SPRING_PROFILES_ACTIVE=prod
 #ENV SERVER_PORT=8081
 
 ## Database
-#ENV SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/etutor_binary_search
-#ENV SPRING_DATASOURCE_USERNAME=etutor_binary_search
+#ENV SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/etutor_datalog
+#ENV SPRING_DATASOURCE_USERNAME=etutor_datalog
 #ENV SPRING_DATASOURCE_PASSWORD=TBD
-#ENV SPRING_FLYWAY_USER=etutor_binary_search_admin
+#ENV SPRING_FLYWAY_USER=etutor_datalog_admin
 #ENV SPRING_FLYWAY_PASSWORD=TBD
 
 ## Clients (just as example, add more when executing)
