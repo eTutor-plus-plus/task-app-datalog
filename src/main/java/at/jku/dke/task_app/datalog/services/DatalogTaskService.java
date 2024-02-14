@@ -8,15 +8,17 @@ import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskDto;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogParseException;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogParser;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogTokenizer;
+import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
+import at.jku.dke.task_app.datalog.evaluation.ExecutionException;
+import at.jku.dke.task_app.datalog.evaluation.SyntaxException;
 import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.StringReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class provides methods for managing {@link DatalogTask}s.
@@ -24,14 +26,18 @@ import java.io.StringReader;
 @Service
 public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, DatalogTaskGroup, ModifyDatalogTaskDto> {
 
+    private final DatalogExecutor executor;
+
     /**
      * Creates a new instance of class {@link DatalogTaskService}.
      *
      * @param repository          The task repository.
      * @param taskGroupRepository The task group repository.
+     * @param executor            The datalog executor.
      */
-    public DatalogTaskService(DatalogTaskRepository repository, DatalogTaskGroupRepository taskGroupRepository) {
+    public DatalogTaskService(DatalogTaskRepository repository, DatalogTaskGroupRepository taskGroupRepository, DatalogExecutor executor) {
         super(repository, taskGroupRepository);
+        this.executor = executor;
     }
 
     @Override
@@ -39,20 +45,23 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         if (!modifyTaskDto.taskType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
 
-//        this.validate(modifyTaskDto.additionalData().solution());
-        return new DatalogTask(modifyTaskDto.additionalData().solution(), modifyTaskDto.additionalData().query(), modifyTaskDto.additionalData().uncheckedTerms());
+        this.validate(modifyTaskDto.additionalData().solution());
+        return new DatalogTask(
+            modifyTaskDto.additionalData().solution(),
+            this.convertStringToList(modifyTaskDto.additionalData().query()),
+            modifyTaskDto.additionalData().uncheckedTerms());
     }
 
     @Override
     protected void updateTask(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> modifyTaskDto) {
         if (!modifyTaskDto.taskType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
-//        if (!task.getSolution().equals(modifyTaskDto.additionalData().solution()))
-//            this.validate(modifyTaskDto.additionalData().solution());
+        if (!task.getSolution().equals(modifyTaskDto.additionalData().solution()))
+            this.validate(modifyTaskDto.additionalData().solution());
 
         task.setSolution(modifyTaskDto.additionalData().solution());
-        task.setQuery(modifyTaskDto.additionalData().query());
-        task.setUncheckedTerms(modifyTaskDto.additionalData().uncheckedTerms());
+        task.setQuery(this.convertStringToList(modifyTaskDto.additionalData().query()));
+        task.setUncheckedTermsRaw(modifyTaskDto.additionalData().uncheckedTerms());
     }
 
     @Override
@@ -67,12 +76,25 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
      * @throws ValidationException If the facts are not a valid datalog program.
      */
     private void validate(String facts) {
-        try (var r = new StringReader(facts)) {
-            var tokenizer = new DatalogTokenizer(r);
-            DatalogParser.parseProgram(tokenizer);
-        } catch (DatalogParseException ex) {
+        try {
+            this.executor.execute(facts, new String[0]);
+        } catch (SyntaxException ex) {
             LOG.warn("Failed to parse datalog program.", ex);
             throw new ValidationException("Invalid datalog program: " + ex.getMessage());
+        } catch (IOException | ExecutionException ex) {
+            LOG.error("Failed to validate datalog program.", ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to validate datalog program.", ex);
         }
     }
+
+    /**
+     * Converts the given string to a list of strings by splitting semicolon.
+     *
+     * @param s The string to convert.
+     * @return The list of strings.
+     */
+    private List<String> convertStringToList(String s) {
+        return Arrays.stream(s.split(";")).filter(x -> !x.isBlank()).toList();
+    }
+
 }

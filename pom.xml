@@ -25,13 +25,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>local-maven-repo</id>
-            <url>file:///${project.basedir}/local-repo</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>at.jku.dke.etutor</groupId>
@@ -69,11 +62,6 @@
             <groupId>org.sqids</groupId>
             <artifactId>sqids</artifactId>
             <version>0.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.HarvardPL</groupId>
-            <artifactId>AbcDatalog</artifactId>
-            <version>v0.7.0</version>
         </dependency>
 
         <!-- Spring Dev -->

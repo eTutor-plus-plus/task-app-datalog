@@ -1,0 +1,5 @@
+# Logging
+logging:
+  level:
+    ROOT: info
+    at.jku.dke: trace
