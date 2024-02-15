@@ -186,6 +186,7 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
 
             var predicate = fact
                 .substring(0, index)
+                .replace("\t", "")
                 .replace("\n", "")
                 .replace("\r", "")
                 .replace(" ", "");

@@ -11,7 +11,10 @@ public final class HashIds {
     private HashIds() {
     }
 
-    private static final Sqids SQIDS = Sqids.builder().minLength(4).build();
+    private static final Sqids SQIDS = Sqids.builder()
+        .minLength(4)
+        .alphabet("tQWcTyakYope5iu9J6zGfRFrdEvMK7X31ZmxgqsSANU2hjODIV0CwnP4L8lBbH")
+        .build();
 
     /**
      * Encodes the given id.
