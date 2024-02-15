@@ -6,6 +6,10 @@ import at.jku.dke.etutor.task_app.dto.SubmissionMode;
 import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
+import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysis;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.AnalysisException;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +18,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Service that evaluates submissions.
@@ -62,14 +66,12 @@ public class EvaluationService {
         LOG.info("Evaluating input for task {} with mode {} and feedback-level {}", submission.taskId(), submission.mode(), submission.feedbackLevel());
         Locale locale = Locale.of(submission.language());
         BigDecimal points = BigDecimal.ZERO;
-        List<CriterionDto> criteria = new ArrayList<>();
-        String feedback = this.messageSource.getMessage("incorrect", null, locale);
-        String facts = submission.mode() == SubmissionMode.SUBMIT ? task.getTaskGroup().getSubmissionFacts() : task.getTaskGroup().getDiagnoseFacts();
-        boolean encodeFacts = submission.mode() == SubmissionMode.SUBMIT;
 
         // execute
-        Map<String, List<String>> solutionResult;
-        Map<String, List<String>> studentResult;
+        String facts = submission.mode() == SubmissionMode.SUBMIT ? task.getTaskGroup().getSubmissionFacts() : task.getTaskGroup().getDiagnoseFacts();
+        boolean encodeFacts = submission.mode() == SubmissionMode.SUBMIT;
+        DatalogExecutor.ExecutionResult solutionResult;
+        DatalogExecutor.ExecutionResult submissionResult;
         try {
             solutionResult = this.executor.execute(facts, task.getSolution(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
         } catch (ExecutionException | IOException ex) {
@@ -78,23 +80,30 @@ public class EvaluationService {
         }
 
         try {
-            studentResult = this.executor.execute(facts, submission.submission().input(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
+            submissionResult = this.executor.execute(facts, submission.submission().input(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
         } catch (SyntaxException ex) {
             LOG.warn("Syntax error in input for task {}", submission.taskId());
+            List<CriterionDto> criteria = new ArrayList<>();
             criteria.add(new CriterionDto(
                 this.messageSource.getMessage("criterium.syntax", null, locale),
                 null,
                 false,
-                ex.getMessage()));
-            return new GradingDto(task.getMaxPoints(), points, feedback, criteria);
+                "<pre>" + HtmlUtils.htmlEscape(ex.getMessage()) + "</pre>"));
+            return new GradingDto(task.getMaxPoints(), points, this.messageSource.getMessage("syntaxError", null, locale), criteria);
         } catch (ExecutionException | IOException ex) {
             LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating input for task " + submission.taskId(), ex);
         }
 
-        // evaluate
-        var analysis = new DatalogAnalysis(solutionResult, studentResult);
-
-        return new GradingDto(task.getMaxPoints(), points, feedback, criteria);
+        // analyze, grade, feedback
+        try {
+            var analysis = new DatalogAnalysis(solutionResult.result(), submissionResult.result());
+            points = analysis.isCorrect() ? task.getMaxPoints() : BigDecimal.ZERO;
+            var reporter = new DatalogReport(this.messageSource, locale, submission.mode(), submission.feedbackLevel(), analysis, submissionResult.output());
+            return new GradingDto(task.getMaxPoints(), points, reporter.getGeneralFeedback(), reporter.getCriteria());
+        } catch (AnalysisException ex) {
+            LOG.error("Error while analyzing query result for task {}", submission.taskId(), ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while analysing query result for task " + submission.taskId(), ex);
+        }
     }
 }

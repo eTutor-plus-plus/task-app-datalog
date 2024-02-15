@@ -1,4 +1,4 @@
-package at.jku.dke.task_app.datalog.evaluation;
+package at.jku.dke.task_app.datalog.evaluation.exceptions;
 
 /**
  * Exception that is thrown if a syntax error occurs.

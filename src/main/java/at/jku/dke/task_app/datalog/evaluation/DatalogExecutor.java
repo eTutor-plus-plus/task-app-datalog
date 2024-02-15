@@ -2,6 +2,8 @@ package at.jku.dke.task_app.datalog.evaluation;
 
 import at.jku.dke.task_app.datalog.config.DatalogSettings;
 import at.jku.dke.task_app.datalog.data.entities.TermDescription;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -48,11 +50,11 @@ public class DatalogExecutor {
      * @throws IOException        If an I/O error occurs.
      * @throws ExecutionException If the process execution fails.
      */
-    public ExecutionResult execute(String input, String[] args) throws IOException, ExecutionException {
+    public ExecutionOutput execute(String input, String[] args) throws IOException, ExecutionException {
         // Write file contents
         var id = UUID.randomUUID().toString();
         File file = File.createTempFile(id, ".dlv", this.workingDirectory.toFile());
-        LOG.debug("Writing input to temporary file {}", file);
+        LOG.debug("Writing input {} to temporary file {}", input, file);
         Files.writeString(file.toPath(), input);
 
         // Build process
@@ -99,7 +101,7 @@ public class DatalogExecutor {
         errorFile.delete();
 
         // Return
-        return new ExecutionResult(output, process.exitValue());
+        return new ExecutionOutput(output, process.exitValue());
     }
 
     /**
@@ -108,12 +110,12 @@ public class DatalogExecutor {
      * @param facts   The datalog facts from the task group.
      * @param rules   The datalog rules from the submission.
      * @param queries The datalog queries from the task.
-     * @return The output of the datalog binary. The key of the map is the predicate of the query, the value is the output of the query.
+     * @return The result of the datalog execution.
      * @throws IOException        If an I/O error occurs.
      * @throws ExecutionException If the process execution fails.
      * @throws SyntaxException    If the datalog execution fails with a syntax error.
      */
-    public Map<String, List<String>> execute(String facts, String rules, List<String> queries) throws IOException, ExecutionException {
+    public ExecutionResult execute(String facts, String rules, List<String> queries) throws IOException, ExecutionException {
         return execute(facts, rules, queries, Collections.emptyList(), true);
     }
 
@@ -125,14 +127,28 @@ public class DatalogExecutor {
      * @param queries        The datalog queries from the task.
      * @param uncheckedTerms The unchecked terms from the task.
      * @param encodeFacts    Whether the facts (except in unchecked terms) should be encoded.
-     * @return The output of the datalog binary. The key of the map is the predicate of the query, the value is the output of the query.
+     * @return The result of the datalog execution.
      * @throws IOException        If an I/O error occurs.
      * @throws ExecutionException If the process execution fails.
      * @throws SyntaxException    If the datalog execution fails with a syntax error.
      */
-    public Map<String, List<String>> execute(String facts, String rules, List<String> queries, List<TermDescription> uncheckedTerms, boolean encodeFacts) throws IOException, ExecutionException {
+    public ExecutionResult execute(String facts, String rules, List<String> queries, List<TermDescription> uncheckedTerms, boolean encodeFacts) throws IOException, ExecutionException {
         if (encodeFacts)
             facts = this.encodeFacts(facts, uncheckedTerms);
+
+        // Execute raw for return to caller
+        String input = facts + System.lineSeparator() +
+                       rules + System.lineSeparator();
+        var rawResult = this.execute(input, new String[]{"-nofacts"});
+        if (rawResult.exitCode() != 0) {
+            if (rawResult.output().contains(".dlv")) {
+                LOG.debug("Datalog execution failed with syntax error: {}", rawResult.output());
+                throw new SyntaxException(rawResult.output());
+            }
+
+            LOG.warn("Datalog execution failed with error output {}", rawResult.output());
+            throw new ExecutionException("Datalog execution failed with error output " + rawResult.output());
+        }
 
         Map<String, List<String>> result = new HashMap<>();
         for (String query : queries) {
@@ -140,28 +156,19 @@ public class DatalogExecutor {
 
             LOG.debug("Executing datalog with facts: {}, rules: {}, query: {}", facts, rules, query);
 
-            // Build input
-            String input = facts + System.lineSeparator() +
-                           rules + System.lineSeparator() +
-                           query;
-
             // Execute
-            var executionResult = this.execute(input, new String[]{"-cautious"});
+            String queryInput = input + query;
+            var executionResult = this.execute(queryInput, new String[]{"-cautious"});
             if (executionResult.exitCode() != 0) {
-                if (executionResult.output().contains(".dlv")) {
-                    LOG.debug("Datalog execution failed with syntax error: {}", executionResult.output());
-                    throw new SyntaxException(executionResult.output());
-                }
-
-                LOG.warn("Datalog execution failed with error output {}", executionResult.output());
-                throw new ExecutionException("Datalog execution failed with error output " + executionResult.output());
+                LOG.warn("Datalog query execution failed with error output {}", executionResult.output());
+                throw new ExecutionException("Datalog query execution failed with error output " + executionResult.output());
             }
 
             // Parse output
-            List<String> output = Arrays.asList(executionResult.output().split(System.lineSeparator()));
+            List<String> output = Arrays.stream(executionResult.output().split(System.lineSeparator())).filter(x -> !x.isBlank()).toList();
             result.put(predicate, output);
         }
-        return result;
+        return new ExecutionResult(rawResult.output(), result);
     }
 
     /**
@@ -228,11 +235,20 @@ public class DatalogExecutor {
     }
 
     /**
-     * Represents the result of an execution.
+     * Represents the output of an execution.
      *
      * @param output   The output.
      * @param exitCode The exit code.
      */
-    public record ExecutionResult(String output, int exitCode) {
+    public record ExecutionOutput(String output, int exitCode) {
+    }
+
+    /**
+     * Represents the result of an execution.
+     *
+     * @param output The output.
+     * @param result The parsed query result. The key of the map is the predicate of the query, the value is the output of the query.
+     */
+    public record ExecutionResult(String output, Map<String, List<String>> result) {
     }
 }

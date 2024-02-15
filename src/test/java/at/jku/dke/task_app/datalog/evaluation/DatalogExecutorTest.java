@@ -1,6 +1,7 @@
 package at.jku.dke.task_app.datalog.evaluation;
 
 import at.jku.dke.task_app.datalog.config.DatalogSettings;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -80,7 +81,7 @@ class DatalogExecutorTest {
         var result = executor.execute("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) :- path(X,Z), arc(Z,Y).", List.of("path(X,Y)?"));
 
         // Assert
-        assertThat(result).containsEntry("path", Arrays.asList("a10, a20", "a10, a30", "a20, a30"));
+        assertThat(result.result()).containsEntry("path", Arrays.asList("a10, a20", "a10, a30", "a20, a30"));
     }
 
 }

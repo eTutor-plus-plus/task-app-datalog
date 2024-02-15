@@ -1,4 +1,4 @@
-package at.jku.dke.task_app.datalog.evaluation;
+package at.jku.dke.task_app.datalog.evaluation.exceptions;
 
 /**
  * Exception thrown when an error occurs during Datalog execution.
