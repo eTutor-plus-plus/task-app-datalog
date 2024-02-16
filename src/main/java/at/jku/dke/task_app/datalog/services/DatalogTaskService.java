@@ -94,7 +94,7 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
      * @return The list of strings.
      */
     private List<String> convertStringToList(String s) {
-        return Arrays.stream(s.split(";")).filter(x -> !x.isBlank()).toList();
+        return Arrays.stream(s.split(";")).map(String::strip).filter(x -> !x.isBlank()).toList();
     }
 
 }

@@ -78,11 +78,10 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
             if (fact.isBlank())
                 continue;
 
-            list.append("<li>");
             var index = fact.indexOf("(");
             if (index < 0) {
                 if (!alreadyUsed.contains(fact))
-                    list.append(fact).append("</li>");
+                    list.append("<li>").append(fact).append("</li>");
                 alreadyUsed.add(fact);
                 continue;
             }
@@ -91,10 +90,12 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
                     .substring(0, index)
                     .replace("\n", "")
                     .replace("\r", "")
+                    .replace("\t", "")
                     .replace(" ", "");
             if (alreadyUsed.contains(predicate))
                 continue;
 
+            list.append("<li>");
             var terms = fact.substring(index + 1, fact.length() - 1).split(",");
             list.append(predicate).append('(');
             for (int j = 0; j < terms.length; j++) {

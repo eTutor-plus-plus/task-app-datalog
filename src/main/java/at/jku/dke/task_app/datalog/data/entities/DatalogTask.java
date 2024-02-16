@@ -173,6 +173,9 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
      * @return The list of term descriptions.
      */
     private static List<TermDescription> convertStringToTermDescriptionList(String s) {
+        if (s == null)
+            return new ArrayList<>();
+
         List<String> facts = Arrays.stream(s.split("\\.")).toList();
         List<TermDescription> td = new ArrayList<>(facts.size());
 
