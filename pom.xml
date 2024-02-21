@@ -12,7 +12,7 @@
 
     <groupId>at.jku.dke.etutor</groupId>
     <artifactId>task-app-datalog</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
 
     <name>eTutor Task-App: Datalog</name>
     <description>eTutor Task-App for task type "datalog"</description>
@@ -24,13 +24,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>local-maven-repo</id>
-            <url>file:///${project.basedir}/local-repo</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -69,11 +62,6 @@
             <groupId>org.sqids</groupId>
             <artifactId>sqids</artifactId>
             <version>0.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.HarvardPL</groupId>
-            <artifactId>AbcDatalog</artifactId>
-            <version>v0.7.0</version>
         </dependency>
 
         <!-- Spring Dev -->
@@ -135,6 +123,12 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>5.4.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>uk.org.webcompere</groupId>
+            <artifactId>system-stubs-jupiter</artifactId>
+            <version>2.1.6</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

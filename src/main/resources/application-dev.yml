@@ -13,6 +13,12 @@ spring:
   jpa:
     show-sql: true
 
+# Datalog
+datalog:
+  exe: ./bin/dlv-mac-m1 # Adjust to your OS
+  maxExecutionTime: 10 # seconds
+  factEncodingSuffix: 0
+
 # API key definition
 clients:
   api-keys:

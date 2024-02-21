@@ -6,17 +6,16 @@ import at.jku.dke.etutor.task_app.services.BaseTaskGroupService;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskGroupDto;
-import edu.harvard.seas.pl.abcdatalog.ast.PositiveAtom;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogParseException;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogParser;
-import edu.harvard.seas.pl.abcdatalog.parser.DatalogTokenizer;
+import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
+import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import jakarta.validation.ValidationException;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.StringReader;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -29,16 +28,19 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
 
     private static final String VARIABLE_NAMES = "XYZUVWABCDEFGHIJKLMNOPQRST";
     private final MessageSource messageSource;
+    private final DatalogExecutor executor;
 
     /**
      * Creates a new instance of class {@link DatalogTaskGroupService}.
      *
      * @param repository    The task group repository.
      * @param messageSource The message source.
+     * @param executor      The datalog executor.
      */
-    public DatalogTaskGroupService(DatalogTaskGroupRepository repository, MessageSource messageSource) {
+    public DatalogTaskGroupService(DatalogTaskGroupRepository repository, MessageSource messageSource, DatalogExecutor executor) {
         super(repository);
         this.messageSource = messageSource;
+        this.executor = executor;
     }
 
     @Override
@@ -69,25 +71,40 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     @Override
     protected TaskGroupModificationResponseDto mapToReturnData(DatalogTaskGroup taskGroup, boolean create) {
         StringBuilder list = new StringBuilder("<ul>");
-        try (var r = new StringReader(taskGroup.getDiagnoseFacts())) {
-            var tokenizer = new DatalogTokenizer(r);
-            var clauses = DatalogParser.parseProgram(tokenizer);
+        String[] facts = taskGroup.getDiagnoseFacts().split("\\.");
 
-            Set<String> alreadyUsed = new HashSet<>();
-            for (var c : clauses) {
-                if (c.getHead() instanceof PositiveAtom pa && !alreadyUsed.contains(pa.getPred().getSym())) {
-                    list.append("<li>").append(pa.getPred().getSym()).append('(');
-                    for (int i = 0; i < pa.getPred().getArity(); i++) {
-                        if (i > 0)
-                            list.append(", ");
-                        list.append(VARIABLE_NAMES.charAt(i));
-                    }
-                    list.append(")</li>");
-                    alreadyUsed.add(pa.getPred().getSym());
-                }
+        Set<String> alreadyUsed = new HashSet<>();
+        for (String fact : facts) {
+            if (fact.isBlank())
+                continue;
+
+            var index = fact.indexOf("(");
+            if (index < 0) {
+                if (!alreadyUsed.contains(fact))
+                    list.append("<li>").append(fact).append("</li>");
+                alreadyUsed.add(fact);
+                continue;
             }
-        } catch (DatalogParseException ignore) {
-            // this should never happen
+
+            var predicate = fact
+                    .substring(0, index)
+                    .replace("\n", "")
+                    .replace("\r", "")
+                    .replace("\t", "")
+                    .replace(" ", "");
+            if (alreadyUsed.contains(predicate))
+                continue;
+
+            list.append("<li>");
+            var terms = fact.substring(index + 1, fact.length() - 1).split(",");
+            list.append(predicate).append('(');
+            for (int j = 0; j < terms.length; j++) {
+                if (j > 0)
+                    list.append(", ");
+                list.append(VARIABLE_NAMES.charAt(j));
+            }
+            list.append(")</li>");
+            alreadyUsed.add(predicate);
         }
         list.append("</ul>");
 
@@ -105,12 +122,14 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
      * @throws ValidationException If the facts are not a valid datalog program.
      */
     private void validate(String part, String facts) {
-        try (var r = new StringReader(facts)) {
-            var tokenizer = new DatalogTokenizer(r);
-            DatalogParser.parseProgram(tokenizer);
-        } catch (DatalogParseException ex) {
+        try {
+            this.executor.execute(facts, new String[0]);
+        } catch (SyntaxException ex) {
             LOG.warn("Failed to parse " + part + " datalog program.", ex);
             throw new ValidationException("Invalid " + part + " datalog program: " + ex.getMessage());
+        } catch (IOException | ExecutionException ex) {
+            LOG.error("Failed to validate " + part + " datalog program.", ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to validate " + part + " datalog program.", ex);
         }
     }
 }
