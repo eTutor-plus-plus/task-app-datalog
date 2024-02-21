@@ -54,7 +54,7 @@ public class DatalogReport {
             return this.messageSource.getMessage("noSyntaxError", null, this.locale);
 
         return this.analysis.isCorrect() ?
-            this.messageSource.getMessage("correct", null, this.locale) :
+            this.messageSource.getMessage(this.mode == SubmissionMode.SUBMIT ? "correct" : "possiblyCorrect", null, this.locale) :
             this.messageSource.getMessage("incorrect", null, this.locale);
     }
 

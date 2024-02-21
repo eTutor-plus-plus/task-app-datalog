@@ -45,7 +45,7 @@ class DatalogReportTest {
     }
 
     @Test
-    void getGeneralFeedback_correct() {
+    void getGeneralFeedback_submit_correct() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
@@ -58,6 +58,22 @@ class DatalogReportTest {
 
         // Assert
         assertEquals("correct", result);
+    }
+
+    @Test
+    void getGeneralFeedback_diagnose_correct() {
+        // Arrange
+        MessageSource ms = mock(MessageSource.class);
+        DatalogAnalysis analysis = mock(DatalogAnalysis.class);
+        when(analysis.isCorrect()).thenReturn(true);
+        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput");
+        when(ms.getMessage("possiblyCorrect", null, Locale.GERMAN)).thenReturn("possiblyCorrect");
+
+        // Act
+        String result = report.getGeneralFeedback();
+
+        // Assert
+        assertEquals("possiblyCorrect", result);
     }
 
     @Test
