@@ -1,6 +1,7 @@
 package at.jku.dke.task_app.datalog.evaluation.analysis;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -18,7 +19,7 @@ public class DatalogPredicate {
      * @param name  The name of the predicate.
      * @param facts The facts of the predicate.
      */
-    DatalogPredicate(String name, List<String> facts) {
+    public DatalogPredicate(String name, List<String> facts) {
         this.name = name;
         this.facts = facts.stream().map(f -> new DatalogFact(this, f)).toList();
         this.arity = this.facts.isEmpty() ? 0 : this.facts.getFirst().getArity();
@@ -79,5 +80,18 @@ public class DatalogPredicate {
                 builder.append(", ");
         }
         return builder.append(')').toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DatalogPredicate that = (DatalogPredicate) o;
+        return arity == that.arity && Objects.equals(name, that.name) && Objects.equals(facts, that.facts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, arity, facts);
     }
 }

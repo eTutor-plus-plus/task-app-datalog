@@ -7,7 +7,6 @@ import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogFact;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogPredicate;
 import org.springframework.context.MessageSource;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -67,7 +66,7 @@ public class DatalogReport {
     public List<CriterionDto> getCriteria() {
         var criteria = new ArrayList<CriterionDto>();
 
-        // Syntax
+        // Syntax (because if syntax is invalid, this method will not be called)
         criteria.add(new CriterionDto(
             this.messageSource.getMessage("criterium.syntax", null, locale),
             null,
@@ -75,6 +74,15 @@ public class DatalogReport {
             this.messageSource.getMessage("criterium.syntax.valid", null, locale)));
 
         // Semantics
+        if (this.mode == SubmissionMode.RUN) {
+            criteria.add(new CriterionDto(
+                this.messageSource.getMessage("criterium.result", null, locale),
+                null,
+                true,
+                "<div style=\"font-family: monospace;\">" + this.rawOutput + "</div>"
+            ));
+            return criteria;
+        }
         if (this.mode != SubmissionMode.DIAGNOSE)
             return criteria;
 
@@ -164,7 +172,7 @@ public class DatalogReport {
         criteria.add(new CriterionDto(
             this.messageSource.getMessage("criterium.result", null, locale),
             null,
-            true,
+            analysis.isCorrect(),
             "<div style=\"font-family: monospace;\">" + this.rawOutput + "</div>"
         ));
 

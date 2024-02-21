@@ -5,7 +5,7 @@ import at.jku.dke.etutor.task_app.dto.TaskStatus;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.data.entities.TermDescription;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskDto;
-import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
+import at.jku.dke.task_app.datalog.evaluation.DatalogExecutorImpl;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import jakarta.validation.ValidationException;
@@ -31,7 +31,7 @@ class DatalogTaskServiceTest {
             hasChild(X, Y)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
 
         // Act
@@ -53,7 +53,7 @@ class DatalogTaskServiceTest {
             hasChild(X, Y)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
 
         // Act & Assert
@@ -64,7 +64,7 @@ class DatalogTaskServiceTest {
     void createTask_invalidSyntax() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", "hasChild(X, Y)?", "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
 
@@ -76,7 +76,7 @@ class DatalogTaskServiceTest {
     void createTask_executorProblem() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", "hasChild(X, Y)?", "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         when(exec.execute(anyString(), any())).thenThrow(new ExecutionException("Invalid executor path."));
 
@@ -93,7 +93,7 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
 
@@ -116,7 +116,7 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
 
@@ -131,7 +131,7 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
@@ -147,7 +147,7 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
         when(exec.execute(anyString(), any())).thenThrow(new IOException("Some error."));
@@ -163,7 +163,7 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskService(null, null, exec);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
 

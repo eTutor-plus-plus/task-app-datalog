@@ -1,13 +1,15 @@
 package at.jku.dke.task_app.datalog.controllers;
 
 import at.jku.dke.etutor.task_app.auth.AuthConstants;
-import at.jku.dke.etutor.task_app.dto.ModifyTaskGroupDto;
+import at.jku.dke.etutor.task_app.dto.ModifyTaskDto;
 import at.jku.dke.etutor.task_app.dto.TaskStatus;
 import at.jku.dke.task_app.datalog.ClientSetupExtension;
 import at.jku.dke.task_app.datalog.DatabaseSetupExtension;
+import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
-import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskGroupDto;
+import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
+import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskDto;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,27 +18,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.hamcrest.Matchers.equalTo;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith({DatabaseSetupExtension.class, ClientSetupExtension.class})
-class TaskGroupControllerTest {
+class TaskControllerTest {
 
     @LocalServerPort
     private int port;
 
     @Autowired
-    private DatalogTaskGroupRepository repository;
+    private DatalogTaskRepository repository;
 
+    @Autowired
+    private DatalogTaskGroupRepository groupRepository;
+
+    private long taskId;
     private long taskGroupId;
 
     @BeforeEach
     void initDb() {
         this.repository.deleteAll();
-        this.taskGroupId = this.repository.save(new DatalogTaskGroup(1L, TaskStatus.APPROVED, "person(mike).", "person(steve).")).getId();
+        var group = this.groupRepository.save(new DatalogTaskGroup(1L, TaskStatus.APPROVED, "person(mike).", "person(steve)."));
+        this.taskGroupId = group.getId();
+        this.taskId = this.repository.save(new DatalogTask(1L, BigDecimal.TEN, TaskStatus.APPROVED, group, "human(X) :- person(X).", List.of("human(X)?", "person(X)?"), "person(mike).")).getId();
     }
 
     //#region --- GET ---
@@ -48,14 +59,15 @@ class TaskGroupControllerTest {
             .accept(ContentType.JSON)
             // WHEN
             .when()
-            .get("/api/taskGroup/{id}", this.taskGroupId)
+            .get("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .body("diagnoseFacts", equalTo("person(mike)."))
-            .body("submissionFacts", equalTo("person(steve)."));
+            .body("solution", equalTo("human(X) :- person(X)."))
+            .body("query", equalTo("human(X)?;person(X)?"))
+            .body("uncheckedTerms", equalTo("person(mike)."));
     }
 
     @Test
@@ -66,7 +78,7 @@ class TaskGroupControllerTest {
             .accept(ContentType.JSON)
             // WHEN
             .when()
-            .get("/api/taskGroup/{id}", this.taskGroupId + 1)
+            .get("/api/task/{id}", this.taskId + 1)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -81,7 +93,7 @@ class TaskGroupControllerTest {
             .accept(ContentType.JSON)
             // WHEN
             .when()
-            .get("/api/taskGroup/{id}", this.taskGroupId)
+            .get("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -96,18 +108,18 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .post("/api/taskGroup/{id}", this.taskGroupId + 2)
+            .post("/api/task/{id}", this.taskId + 2)
             // THEN
             .then()
             .log().ifValidationFails()
             .statusCode(201)
             .contentType(ContentType.JSON)
-            .header("Location", containsString("/api/taskGroup/" + (this.taskGroupId + 2)))
-            .body("descriptionDe", containsString("person(X)"))
-            .body("descriptionEn", containsString("person(X)"));
+            .header("Location", containsString("/api/task/" + (this.taskId + 2)))
+            .body("descriptionDe", emptyOrNullString())
+            .body("descriptionEn", emptyOrNullString());
     }
 
     @Test
@@ -116,10 +128,10 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .post("/api/taskGroup/{id}", this.taskGroupId + 2)
+            .post("/api/task/{id}", this.taskId + 2)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -134,7 +146,7 @@ class TaskGroupControllerTest {
             .contentType(ContentType.JSON)
             // WHEN
             .when()
-            .post("/api/taskGroup/{id}", this.taskGroupId + 2)
+            .post("/api/task/{id}", this.taskId + 2)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -147,10 +159,10 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.SUBMIT_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .post("/api/taskGroup/{id}", this.taskGroupId + 2)
+            .post("/api/task/{id}", this.taskId + 2)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -165,17 +177,17 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(steve).", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .put("/api/taskGroup/{id}", this.taskGroupId)
+            .put("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .body("descriptionDe", containsString("person(X)"))
-            .body("descriptionEn", containsString("person(X)"));
+            .body("descriptionDe", emptyOrNullString())
+            .body("descriptionEn", emptyOrNullString());
     }
 
     @Test
@@ -184,10 +196,10 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(steve).", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .put("/api/taskGroup/{id}", this.taskGroupId + 1)
+            .put("/api/task/{id}", this.taskId + 1)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -200,10 +212,10 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("sql", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(steve).", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "sql", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .put("/api/taskGroup/{id}", this.taskGroupId)
+            .put("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -218,7 +230,7 @@ class TaskGroupControllerTest {
             .contentType(ContentType.JSON)
             // WHEN
             .when()
-            .put("/api/taskGroup/{id}", this.taskGroupId)
+            .put("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -231,10 +243,10 @@ class TaskGroupControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.SUBMIT_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(steve).", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
-            .put("/api/taskGroup/{id}", this.taskGroupId)
+            .put("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -250,7 +262,7 @@ class TaskGroupControllerTest {
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             // WHEN
             .when()
-            .delete("/api/taskGroup/{id}", this.taskGroupId)
+            .delete("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -264,7 +276,7 @@ class TaskGroupControllerTest {
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             // WHEN
             .when()
-            .delete("/api/taskGroup/{id}", this.taskGroupId + 1)
+            .delete("/api/task/{id}", this.taskId + 1)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -278,7 +290,7 @@ class TaskGroupControllerTest {
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.SUBMIT_API_KEY)
             // WHEN
             .when()
-            .delete("/api/taskGroup/{id}", this.taskGroupId)
+            .delete("/api/task/{id}", this.taskId)
             // THEN
             .then()
             .log().ifValidationFails()
@@ -289,13 +301,14 @@ class TaskGroupControllerTest {
     @Test
     void mapToDto() {
         // Arrange
-        var taskGroup = new DatalogTaskGroup("person(mike).", "person(steve).");
+        var task = new DatalogTask("human(X) :- person(X).", List.of("human(X)?", "person(X)?"), "person(mike).");
 
         // Act
-        var result = new TaskGroupController(null).mapToDto(taskGroup);
+        var result = new TaskController(null).mapToDto(task);
 
         // Assert
-        assertEquals(taskGroup.getDiagnoseFacts(), result.diagnoseFacts());
-        assertEquals(taskGroup.getSubmissionFacts(), result.submissionFacts());
+        assertEquals(task.getSolution(), result.solution());
+        assertEquals("human(X)?;person(X)?", result.query());
+        assertEquals(task.getUncheckedTermsRaw(), result.uncheckedTerms());
     }
 }

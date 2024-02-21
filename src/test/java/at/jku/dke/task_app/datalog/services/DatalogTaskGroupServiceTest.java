@@ -4,7 +4,7 @@ import at.jku.dke.etutor.task_app.dto.ModifyTaskGroupDto;
 import at.jku.dke.etutor.task_app.dto.TaskStatus;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskGroupDto;
-import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
+import at.jku.dke.task_app.datalog.evaluation.DatalogExecutorImpl;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import jakarta.validation.ValidationException;
@@ -30,7 +30,7 @@ class DatalogTaskGroupServiceTest {
     void createTaskGroup() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
 
         // Act
@@ -45,7 +45,7 @@ class DatalogTaskGroupServiceTest {
     void createTaskGroup_invalidType() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("xquery", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
 
         // Act & Assert
@@ -56,7 +56,7 @@ class DatalogTaskGroupServiceTest {
     void createTaskGroup_invalidSyntax() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
 
@@ -68,7 +68,7 @@ class DatalogTaskGroupServiceTest {
     void createTaskGroup_executorProblem() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         when(exec.execute(anyString(), any())).thenThrow(new ExecutionException("Some problem."));
 
@@ -82,7 +82,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
 
@@ -98,7 +98,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup_notValidateDiagnoseOnUnchanged() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("diagnose", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("diagnose", "person(mike).");
 
@@ -114,7 +114,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup_notValidateSubmitOnUnchanged() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "submit"));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("person(steve).", "submit");
 
@@ -130,7 +130,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup_invalidType() {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("xquery", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
 
@@ -142,7 +142,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup_invalidSyntax() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
@@ -155,7 +155,7 @@ class DatalogTaskGroupServiceTest {
     void updateTaskGroup_executorProblem() throws IOException, ExecutionException {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
-        var exec = mock(DatalogExecutor.class);
+        var exec = mock(DatalogExecutorImpl.class);
         var service = new DatalogTaskGroupService(null, null, exec);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
         when(exec.execute(anyString(), any())).thenThrow(new IOException("Some error."));

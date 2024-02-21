@@ -68,15 +68,19 @@ public class EvaluationService {
         BigDecimal points = BigDecimal.ZERO;
 
         // execute
-        String facts = submission.mode() == SubmissionMode.SUBMIT ? task.getTaskGroup().getSubmissionFacts() : task.getTaskGroup().getDiagnoseFacts();
+        String facts = submission.mode() == SubmissionMode.SUBMIT ?
+            task.getTaskGroup().getSubmissionFacts() :
+            task.getTaskGroup().getDiagnoseFacts();
         boolean encodeFacts = submission.mode() == SubmissionMode.SUBMIT;
-        DatalogExecutor.ExecutionResult solutionResult;
-        DatalogExecutor.ExecutionResult submissionResult;
-        try {
-            solutionResult = this.executor.execute(facts, task.getSolution(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
-        } catch (ExecutionException | IOException ex) {
-            LOG.error("Error while evaluating solution for task {}", submission.taskId(), ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating solution for task " + submission.taskId(), ex);
+        DatalogExecutorImpl.ExecutionResult solutionResult = null;
+        DatalogExecutorImpl.ExecutionResult submissionResult;
+        if (submission.mode() != SubmissionMode.RUN) {
+            try {
+                solutionResult = this.executor.execute(facts, task.getSolution(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
+            } catch (ExecutionException | IOException ex) {
+                LOG.error("Error while evaluating solution for task {}", submission.taskId(), ex);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating solution for task " + submission.taskId(), ex);
+            }
         }
 
         try {
@@ -94,9 +98,12 @@ public class EvaluationService {
             LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating input for task " + submission.taskId(), ex);
         }
+        if (submission.mode() == SubmissionMode.RUN)
+            solutionResult = submissionResult;
 
         // analyze, grade, feedback
         try {
+            assert solutionResult != null;
             var analysis = new DatalogAnalysis(solutionResult.result(), submissionResult.result());
             points = analysis.isCorrect() ? task.getMaxPoints() : BigDecimal.ZERO;
             var reporter = new DatalogReport(this.messageSource, locale, submission.mode(), submission.feedbackLevel(), analysis, submissionResult.output());

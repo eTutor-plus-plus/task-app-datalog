@@ -16,9 +16,9 @@ public class DatalogFact {
      * @param predicate The predicate of the fact.
      * @param terms     The terms of the fact.
      */
-    DatalogFact(DatalogPredicate predicate, String terms) {
+    public DatalogFact(DatalogPredicate predicate, String terms) {
         this.predicate = predicate;
-        this.terms = terms.split(", ");
+        this.terms = terms.split(",\\s*");
     }
 
     /**

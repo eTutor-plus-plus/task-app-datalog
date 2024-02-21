@@ -53,7 +53,7 @@ public class DatalogAnalysis {
      * @return The solution result.
      */
     public Map<String, List<String>> getSolutionResult() {
-        return solutionResult;
+        return this.solutionResult;
     }
 
     /**
@@ -62,7 +62,7 @@ public class DatalogAnalysis {
      * @return The submission result.
      */
     public Map<String, List<String>> getSubmissionResult() {
-        return submissionResult;
+        return this.submissionResult;
     }
 
     /**
@@ -71,7 +71,7 @@ public class DatalogAnalysis {
      * @return The missing predicates.
      */
     public List<DatalogPredicate> getMissingPredicates() {
-        return missingPredicates;
+        return this.missingPredicates;
     }
 
     /**
@@ -80,7 +80,7 @@ public class DatalogAnalysis {
      * @return The missing facts.
      */
     public List<DatalogFact> getMissingFacts() {
-        return missingFacts;
+        return this.missingFacts;
     }
 
     /**
@@ -89,7 +89,7 @@ public class DatalogAnalysis {
      * @return The redundant facts.
      */
     public List<DatalogFact> getRedundantFacts() {
-        return redundantFacts;
+        return this.redundantFacts;
     }
 
     //#endregion
