@@ -2,14 +2,6 @@
 
 This application provides a REST-interface for following task type: datalog.
 
-Students have to guess a number. The student's input is compared with the number stored in the solution, and it is returned whether the number sought is _smaller_, _equal_ to or
-_greater_ than the input.
-
-This project **can** be used as a template for new task apps. Replace all occurrences of `datalog`/`datalog`/`datalog`/`datalog` with the name of your task
-type.
-
-Task-App repositories should start with `task-app-` and end with the task type (e.g. `task-app-datalog`).
-
 ## Development
 
 In development environment, the API documentation is available at http://localhost:8081/docs.
