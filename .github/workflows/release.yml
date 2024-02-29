@@ -22,13 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.title, 'chore(publish):')
     steps:
-      - name: Checkout Starter Library
-        uses: actions/checkout@v4
-        with:
-          repository: eTutor-plus-plus/task-app-starter
-          ref: main
-          path: starter
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -41,16 +34,15 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Install Starter Library with Maven
-        working-directory: starter
-        run: mvn clean install --file pom.xml
+      - name: Configure Maven
+        uses: s4u/maven-settings-action@v3.0.0
+        with:
+          servers: '[{"id": "github-starter", "username": "${{ secrets.GH_MAVEN_STARTER_USER_NAME }}", "password": "${{ secrets.GH_MAVEN_STARTER_ACCESS_TOKEN }}"}]'
 
       - name: Clean and Compile with maven
-        working-directory: app
         run: mvn -B clean git-commit-id:revision spring-boot:build-info compile --file pom.xml
 
       - name: Build with Maven
-        working-directory: app
         run: mvn -B package -DskipTests --file pom.xml
 
       - name: Split PR title
@@ -63,8 +55,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            app/target/*.jar
-            app/pom.xml
+            target/*.jar
+            pom.xml
           tag_name: "v${{ steps.split.outputs.VERSION }}"
           prerelease: ${{ contains(github.event.pull_request.title, '-') }}
           generate_release_notes: true
