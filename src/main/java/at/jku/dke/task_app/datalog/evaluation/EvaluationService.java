@@ -6,10 +6,11 @@ import at.jku.dke.etutor.task_app.dto.SubmissionMode;
 import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
-import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysis;
+import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysisImpl;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.AnalysisException;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
+import at.jku.dke.task_app.datalog.evaluation.grading.DatalogGrading;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,6 @@ public class EvaluationService {
         // prepare
         LOG.info("Evaluating input for task {} with mode {} and feedback-level {}", submission.taskId(), submission.mode(), submission.feedbackLevel());
         Locale locale = Locale.of(submission.language());
-        BigDecimal points = BigDecimal.ZERO;
 
         String facts = submission.mode() == SubmissionMode.SUBMIT ?
             task.getTaskGroup().getSubmissionFacts() :
@@ -85,7 +85,7 @@ public class EvaluationService {
                 null,
                 false,
                 "<pre>" + HtmlUtils.htmlEscape(ex.getMessage()) + "</pre>"));
-            return new GradingDto(task.getMaxPoints(), points, this.messageSource.getMessage("syntaxError", null, locale), criteria);
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, this.messageSource.getMessage("syntaxError", null, locale), criteria);
         } catch (ExecutionException | IOException ex) {
             LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating input for task " + submission.taskId(), ex);
@@ -105,11 +105,10 @@ public class EvaluationService {
 
         // analyze, grade, feedback
         try {
-            assert solutionResult != null;
-            var analysis = new DatalogAnalysis(solutionResult.result(), submissionResult.result());
-            points = analysis.isCorrect() ? task.getMaxPoints() : BigDecimal.ZERO;
-            var reporter = new DatalogReport(this.messageSource, locale, submission.mode(), submission.feedbackLevel(), analysis, submissionResult.output());
-            return new GradingDto(task.getMaxPoints(), points, reporter.getGeneralFeedback(), reporter.getCriteria());
+            var analysis = new DatalogAnalysisImpl(solutionResult.result(), submissionResult.result());
+            var grading = new DatalogGrading(task, analysis);
+            var reporter = new DatalogReport(this.messageSource, locale, submission.mode(), submission.feedbackLevel(), analysis, submissionResult.output(), grading);
+            return new GradingDto(task.getMaxPoints(), grading.getPoints(), reporter.getGeneralFeedback(), reporter.getCriteria());
         } catch (AnalysisException ex) {
             LOG.error("Error while analyzing query result for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while analysing query result for task " + submission.taskId(), ex);

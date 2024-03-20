@@ -5,11 +5,15 @@ import at.jku.dke.etutor.task_app.dto.SubmissionMode;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysis;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogFact;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogPredicate;
+import at.jku.dke.task_app.datalog.evaluation.grading.DatalogGrading;
+import at.jku.dke.task_app.datalog.evaluation.grading.GradingEntry;
 import org.springframework.context.MessageSource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Class for generating a report for a datalog evaluation.
@@ -21,6 +25,7 @@ public class DatalogReport {
     private final int feedbackLevel;
     private final DatalogAnalysis analysis;
     private final String rawOutput;
+    private final DatalogGrading grading;
 
     /**
      * Creates a new instance of class {@linkplain DatalogReport}.
@@ -31,8 +36,9 @@ public class DatalogReport {
      * @param feedbackLevel The feedback level.
      * @param analysis      The analysis.
      * @param rawOutput     The raw output of the execution.
+     * @param grading       The grading.
      */
-    DatalogReport(MessageSource messageSource, Locale locale, SubmissionMode mode, int feedbackLevel, DatalogAnalysis analysis, String rawOutput) {
+    DatalogReport(MessageSource messageSource, Locale locale, SubmissionMode mode, int feedbackLevel, DatalogAnalysis analysis, String rawOutput, DatalogGrading grading) {
         if (feedbackLevel < 0 || feedbackLevel > 3)
             throw new IllegalArgumentException("feedbackLevel must be between 0 and 3");
 
@@ -42,6 +48,7 @@ public class DatalogReport {
         this.analysis = analysis;
         this.mode = mode;
         this.rawOutput = rawOutput;
+        this.grading = grading;
     }
 
     /**
@@ -50,7 +57,7 @@ public class DatalogReport {
      * @return The general feedback.
      */
     public String getGeneralFeedback() {
-        if (this.mode == SubmissionMode.RUN)
+        if (this.mode == SubmissionMode.RUN) // we assume here that the syntax is valid because otherwise, the evaluation service will abort earlier
             return this.messageSource.getMessage("noSyntaxError", null, this.locale);
 
         return this.analysis.isCorrect() ?
@@ -74,109 +81,58 @@ public class DatalogReport {
             this.messageSource.getMessage("criterium.syntax.valid", null, locale)));
 
         // Semantics
-        if (this.mode == SubmissionMode.RUN) {
+        this.createCriterion("missingPredicates", GradingEntry.MISSING_PREDICATE, analysis::getMissingPredicates).ifPresent(criteria::add);
+        this.createCriterion("missingFacts", GradingEntry.MISSING_PREDICATE, analysis::getMissingFacts).ifPresent(criteria::add);
+        this.createCriterion("superfluousFacts", GradingEntry.SUPERFLUOUS_FACT, analysis::getSuperfluousFacts).ifPresent(criteria::add);
+
+        // Execution result
+        if (this.mode != SubmissionMode.SUBMIT) {
             criteria.add(new CriterionDto(
                 this.messageSource.getMessage("criterium.result", null, locale),
                 null,
-                true,
-                "<div style=\"font-family: monospace;\">" + this.rawOutput + "</div>"
+                this.mode == SubmissionMode.RUN || analysis.isCorrect(),
+                "<pre>" + this.rawOutput + "</pre>"
             ));
-            return criteria;
         }
-        if (this.mode != SubmissionMode.DIAGNOSE)
-            return criteria;
-
-        switch (this.feedbackLevel) {
-            case 0: // no feedback
-                break;
-            case 1: // little feedback
-                if (!analysis.getMissingFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingFacts", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.missingFacts.noCount", null, locale)
-                    ));
-                }
-                if (!analysis.getRedundantFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.redundantFacts", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.redundantFacts.noCount", null, locale)
-                    ));
-                }
-                if (!analysis.getMissingPredicates().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingPredicates", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.missingPredicates.noCount", null, locale)
-                    ));
-                }
-                break;
-            case 2: // some feedback
-                if (!analysis.getMissingFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingFacts", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.missingFacts.count", new Object[]{analysis.getMissingFacts().size()}, locale)
-                    ));
-                }
-                if (!analysis.getRedundantFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.redundantFacts", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.redundantFacts.count", new Object[]{analysis.getRedundantFacts().size()}, locale)
-                    ));
-                }
-                if (!analysis.getMissingPredicates().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingPredicates", null, locale),
-                        null,
-                        false,
-                        this.messageSource.getMessage("criterium.missingPredicates.count", new Object[]{analysis.getMissingPredicates().size()}, locale)
-                    ));
-                }
-                break;
-            case 3: // much feedback
-                if (!analysis.getMissingFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingFacts", null, locale),
-                        null,
-                        false,
-                        buildDetailedFactReport(analysis.getMissingFacts())
-                    ));
-                }
-                if (!analysis.getRedundantFacts().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.redundantFacts", null, locale),
-                        null,
-                        false,
-                        buildDetailedFactReport(analysis.getRedundantFacts())
-                    ));
-                }
-                if (!analysis.getMissingPredicates().isEmpty()) {
-                    criteria.add(new CriterionDto(
-                        this.messageSource.getMessage("criterium.missingPredicates", null, locale),
-                        null,
-                        false,
-                        buildDetailedPredicateReport(analysis.getMissingPredicates())
-                    ));
-                }
-                break;
-        }
-
-        criteria.add(new CriterionDto(
-            this.messageSource.getMessage("criterium.result", null, locale),
-            null,
-            analysis.isCorrect(),
-            "<div style=\"font-family: monospace;\">" + this.rawOutput + "</div>"
-        ));
 
         return criteria;
+    }
+
+    private Optional<CriterionDto> createCriterion(String translationKey, String errorCategory, Supplier<List<?>> listSupplier) {
+        if (this.mode == SubmissionMode.RUN)
+            return Optional.empty();
+        if (listSupplier.get().isEmpty())
+            return Optional.empty();
+
+        return switch (this.feedbackLevel) {
+            case 0 -> // no feedback
+                Optional.empty();
+            case 1 -> // little feedback
+                Optional.of(new CriterionDto(
+                    this.messageSource.getMessage("criterium." + translationKey, null, locale),
+                    this.mode == SubmissionMode.SUBMIT ? this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null) : null,
+                    false,
+                    this.messageSource.getMessage("criterium." + translationKey + ".noCount", null, locale)
+                ));
+            case 2 -> // some feedback
+                Optional.of(new CriterionDto(
+                    this.messageSource.getMessage("criterium." + translationKey, null, locale),
+                    this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null),
+                    false,
+                    this.messageSource.getMessage("criterium." + translationKey + ".count", new Object[]{listSupplier.get().size()}, locale)
+                ));
+            case 3 -> // much feedback
+                //noinspection unchecked
+                Optional.of(new CriterionDto(
+                    this.messageSource.getMessage("criterium." + translationKey, null, locale),
+                    this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null),
+                    false,
+                    listSupplier.get().getFirst() instanceof DatalogFact ?
+                        buildDetailedFactReport((List<DatalogFact>) listSupplier.get()) :
+                        buildDetailedPredicateReport((List<DatalogPredicate>) listSupplier.get())
+                ));
+            default -> Optional.empty();
+        };
     }
 
     private static String buildDetailedFactReport(List<DatalogFact> facts) {

@@ -87,11 +87,11 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
             }
 
             var predicate = fact
-                    .substring(0, index)
-                    .replace("\n", "")
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .replace(" ", "");
+                .substring(0, index)
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "")
+                .replace(" ", "");
             if (alreadyUsed.contains(predicate))
                 continue;
 

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DatalogAnalysisTest {
 
     @Test
-    void constructor_inconsistentQuery(){
+    void constructor_inconsistentQuery() {
         // Arrange
         Map<String, List<String>> submissionResult = Map.of(
             "p1", List.of("a", "b"),
@@ -23,11 +23,11 @@ class DatalogAnalysisTest {
         );
 
         // Act & Assert
-        assertThrows(AnalysisException.class, () -> new DatalogAnalysis(solutionResult, submissionResult));
+        assertThrows(AnalysisException.class, () -> new DatalogAnalysisImpl(solutionResult, submissionResult));
     }
 
     @Test
-    void constructor_inconsistentSubmission(){
+    void constructor_inconsistentSubmission() {
         // Arrange
         Map<String, List<String>> submissionResult = Map.of(
             "p1", List.of("a", "b"),
@@ -39,7 +39,7 @@ class DatalogAnalysisTest {
         );
 
         // Act & Assert
-        assertThrows(AnalysisException.class, () -> new DatalogAnalysis(solutionResult, submissionResult));
+        assertThrows(AnalysisException.class, () -> new DatalogAnalysisImpl(solutionResult, submissionResult));
     }
 
     @Test
@@ -53,7 +53,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         boolean result = analysis.isCorrect();
@@ -73,7 +73,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,g")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         boolean result = analysis.isCorrect();
@@ -93,7 +93,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         Map<String, List<String>> result = analysis.getSolutionResult();
@@ -113,7 +113,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         Map<String, List<String>> result = analysis.getSubmissionResult();
@@ -132,7 +132,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         List<DatalogPredicate> result = analysis.getMissingPredicates();
@@ -153,7 +153,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         List<DatalogPredicate> result = analysis.getMissingPredicates();
@@ -174,7 +174,7 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d", "e,f")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
         List<DatalogFact> result = analysis.getMissingFacts();
@@ -195,10 +195,10 @@ class DatalogAnalysisTest {
             "p1", List.of("a", "b"),
             "p2", List.of("c,d")
         );
-        DatalogAnalysis analysis = new DatalogAnalysis(solutionResult, submissionResult);
+        DatalogAnalysis analysis = new DatalogAnalysisImpl(solutionResult, submissionResult);
 
         // Act
-        List<DatalogFact> result = analysis.getRedundantFacts();
+        List<DatalogFact> result = analysis.getSuperfluousFacts();
 
         // Assert
         assertEquals(1, result.size());

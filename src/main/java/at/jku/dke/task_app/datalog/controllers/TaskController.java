@@ -24,7 +24,16 @@ public class TaskController extends BaseTaskController<DatalogTask, DatalogTaskD
 
     @Override
     protected DatalogTaskDto mapToDto(DatalogTask task) {
-        return new DatalogTaskDto(task.getSolution(), String.join(";", task.getQuery()), task.getUncheckedTermsRaw());
+        return new DatalogTaskDto(
+            task.getSolution(),
+            String.join(";", task.getQuery()),
+            task.getUncheckedTermsRaw(),
+            task.getMissingPredicatePenalty(),
+            task.getMissingFactPenalty(),
+            task.getSuperfluousFactPenalty(),
+            task.getMissingPredicateStrategy(),
+            task.getMissingFactStrategy(),
+            task.getSuperfluousFactStrategy());
     }
 
 }

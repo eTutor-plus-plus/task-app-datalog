@@ -46,10 +46,14 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
 
         this.validate(modifyTaskDto.additionalData().solution());
-        return new DatalogTask(
+        var task = new DatalogTask(
             modifyTaskDto.additionalData().solution(),
             this.convertStringToList(modifyTaskDto.additionalData().query()),
             modifyTaskDto.additionalData().uncheckedTerms());
+
+        setPenaltyProperties(modifyTaskDto, task);
+
+        return task;
     }
 
     @Override
@@ -62,6 +66,7 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         task.setSolution(modifyTaskDto.additionalData().solution());
         task.setQuery(this.convertStringToList(modifyTaskDto.additionalData().query()));
         task.setUncheckedTermsRaw(modifyTaskDto.additionalData().uncheckedTerms());
+        setPenaltyProperties(modifyTaskDto, task);
     }
 
     @Override
@@ -97,4 +102,13 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         return Arrays.stream(s.split(";")).map(String::strip).filter(x -> !x.isBlank()).toList();
     }
 
+    private static void setPenaltyProperties(ModifyTaskDto<ModifyDatalogTaskDto> modifyTaskDto, DatalogTask task) {
+        task.setMissingPredicatePenalty(modifyTaskDto.additionalData().missingPredicatePenalty());
+        task.setMissingFactPenalty(modifyTaskDto.additionalData().missingFactPenalty());
+        task.setSuperfluousFactPenalty(modifyTaskDto.additionalData().superfluousFactPenalty());
+
+        task.setMissingPredicateStrategy(modifyTaskDto.additionalData().missingPredicateStrategy());
+        task.setMissingFactStrategy(modifyTaskDto.additionalData().missingFactStrategy());
+        task.setSuperfluousFactStrategy(modifyTaskDto.additionalData().superfluousFactStrategy());
+    }
 }

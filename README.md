@@ -6,7 +6,7 @@ This application provides a REST-interface for following task type: datalog.
 
 In development environment, the API documentation is available at http://localhost:8081/docs.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Wiki](https://github.com/eTutor-plus-plus/task-app-datalog/wiki) for details.
 
 ## Docker
 

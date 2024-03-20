@@ -1,12 +1,15 @@
 package at.jku.dke.task_app.datalog.evaluation;
 
 import at.jku.dke.etutor.task_app.dto.SubmissionMode;
+import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysis;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogFact;
 import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogPredicate;
+import at.jku.dke.task_app.datalog.evaluation.grading.DatalogGrading;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,17 +27,23 @@ class DatalogReportTest {
         SubmissionMode mode = SubmissionMode.RUN;
         int feedbackLevel = -1;
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogGrading grading = new DatalogGrading(task, analysis);
         String rawOutput = "rawOutput";
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new DatalogReport(ms, locale, mode, feedbackLevel, analysis, rawOutput));
+        assertThrows(IllegalArgumentException.class, () -> new DatalogReport(ms, locale, mode, feedbackLevel, analysis, rawOutput, grading));
     }
 
     @Test
     void getGeneralFeedback_run() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
-        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.RUN, 3, mock(DatalogAnalysis.class), "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.RUN, 3, mock(DatalogAnalysis.class),
+            "rawOutput", new DatalogGrading(task, mock(DatalogAnalysis.class)));
         when(ms.getMessage("noSyntaxError", null, Locale.GERMAN)).thenReturn("noSyntaxError");
 
         // Act
@@ -50,7 +59,10 @@ class DatalogReportTest {
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
         when(analysis.isCorrect()).thenReturn(true);
-        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.SUBMIT, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.SUBMIT, 3, analysis,
+            "rawOutput", new DatalogGrading(task, analysis));
         when(ms.getMessage("correct", null, Locale.GERMAN)).thenReturn("correct");
 
         // Act
@@ -66,7 +78,10 @@ class DatalogReportTest {
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
         when(analysis.isCorrect()).thenReturn(true);
-        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.DIAGNOSE, 3, analysis,
+            "rawOutput", new DatalogGrading(task, analysis));
         when(ms.getMessage("possiblyCorrect", null, Locale.GERMAN)).thenReturn("possiblyCorrect");
 
         // Act
@@ -82,7 +97,10 @@ class DatalogReportTest {
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
         when(analysis.isCorrect()).thenReturn(false);
-        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.SUBMIT, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.GERMAN, SubmissionMode.SUBMIT, 3, analysis,
+            "rawOutput", new DatalogGrading(task, analysis));
         when(ms.getMessage("incorrect", null, Locale.GERMAN)).thenReturn("incorrect");
 
         // Act
@@ -96,7 +114,12 @@ class DatalogReportTest {
     void getCriteria_run() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.RUN, 3, mock(DatalogAnalysis.class), "rawOutput");
+        DatalogAnalysis analysis = mock(DatalogAnalysis.class);
+        when(analysis.isCorrect()).thenReturn(true);
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.RUN, 3, mock(DatalogAnalysis.class), "rawOutput",
+            new DatalogGrading(task, analysis));
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
         when(ms.getMessage("criterium.result", null, Locale.ENGLISH)).thenReturn("Result");
@@ -116,14 +139,17 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertTrue(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
     void getCriteria_submit() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.SUBMIT, 3, mock(DatalogAnalysis.class), "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.SUBMIT, 3, mock(DatalogAnalysis.class), "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
 
@@ -144,7 +170,10 @@ class DatalogReportTest {
     void getCriteria_diagnose_noFeedback() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 0, mock(DatalogAnalysis.class), "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 0, mock(DatalogAnalysis.class), "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
         when(ms.getMessage("criterium.result", null, Locale.ENGLISH)).thenReturn("Result");
@@ -164,7 +193,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
     //#endregion
 
@@ -174,7 +203,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -204,22 +236,25 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
-    void getCriteria_diagnose_littleFeedback_redundantFacts() {
+    void getCriteria_diagnose_littleFeedback_superfluousFacts() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
-        when(ms.getMessage("criterium.redundantFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
-        when(ms.getMessage("criterium.redundantFacts.noCount", null, Locale.ENGLISH)).thenReturn("Error Details");
+        when(ms.getMessage("criterium.superfluousFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
+        when(ms.getMessage("criterium.superfluousFacts.noCount", null, Locale.ENGLISH)).thenReturn("Error Details");
         when(ms.getMessage("criterium.result", null, Locale.ENGLISH)).thenReturn("Result");
-        when(analysis.getRedundantFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
+        when(analysis.getSuperfluousFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
 
         // Act
         var result = report.getCriteria();
@@ -242,7 +277,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
@@ -250,7 +285,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 1, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -280,7 +318,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
     //#endregion
 
@@ -290,7 +328,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -320,22 +361,25 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
-    void getCriteria_diagnose_someFeedback_redundantFacts() {
+    void getCriteria_diagnose_someFeedback_superfluousFacts() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
-        when(ms.getMessage("criterium.redundantFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
-        when(ms.getMessage("criterium.redundantFacts.count", new Object[]{1}, Locale.ENGLISH)).thenReturn("Error Details");
+        when(ms.getMessage("criterium.superfluousFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
+        when(ms.getMessage("criterium.superfluousFacts.count", new Object[]{1}, Locale.ENGLISH)).thenReturn("Error Details");
         when(ms.getMessage("criterium.result", null, Locale.ENGLISH)).thenReturn("Result");
-        when(analysis.getRedundantFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
+        when(analysis.getSuperfluousFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
 
         // Act
         var result = report.getCriteria();
@@ -358,7 +402,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
@@ -366,7 +410,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 2, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -396,7 +443,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
     //#endregion
 
@@ -406,7 +453,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -435,21 +485,24 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
-    void getCriteria_diagnose_muchFeedback_redundantFacts() {
+    void getCriteria_diagnose_muchFeedback_superfluousFacts() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
-        when(ms.getMessage("criterium.redundantFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
+        when(ms.getMessage("criterium.superfluousFacts", null, Locale.ENGLISH)).thenReturn("Error Title");
         when(ms.getMessage("criterium.result", null, Locale.ENGLISH)).thenReturn("Result");
-        when(analysis.getRedundantFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
+        when(analysis.getSuperfluousFacts()).thenReturn(List.of(new DatalogFact(new DatalogPredicate("test", List.of("1, 2")), "1, 2")));
 
         // Act
         var result = report.getCriteria();
@@ -472,7 +525,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
 
     @Test
@@ -480,7 +533,10 @@ class DatalogReportTest {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
         DatalogAnalysis analysis = mock(DatalogAnalysis.class);
-        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput");
+        var task = new DatalogTask();
+        task.setMaxPoints(BigDecimal.TEN);
+        DatalogReport report = new DatalogReport(ms, Locale.ENGLISH, SubmissionMode.DIAGNOSE, 3, analysis, "rawOutput",
+            new DatalogGrading(task, mock(DatalogAnalysis.class)));
 
         when(ms.getMessage("criterium.syntax", null, Locale.ENGLISH)).thenReturn("Syntax");
         when(ms.getMessage("criterium.syntax.valid", null, Locale.ENGLISH)).thenReturn("Syntax is valid");
@@ -509,7 +565,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
+        assertEquals("<pre>rawOutput</pre>", c.feedback());
     }
     //#endregion
 }

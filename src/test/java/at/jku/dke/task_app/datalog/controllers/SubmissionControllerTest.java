@@ -87,9 +87,9 @@ class SubmissionControllerTest {
             .header("Location", containsString("/api/submission/"))
             .body("submissionId", hasLength(36))
             .body("grading.maxPoints", equalTo(2f))
-            .body("grading.points", equalTo(0))
+            .body("grading.points", equalTo(0f))
             .body("grading.generalFeedback", any(String.class))
-            .body("grading.criteria", hasSize(1));
+            .body("grading.criteria", hasSize(2));
     }
 
     @Test

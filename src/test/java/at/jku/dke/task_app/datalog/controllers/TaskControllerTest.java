@@ -23,7 +23,6 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -108,7 +107,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .post("/api/task/{id}", this.taskId + 2)
@@ -128,7 +128,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .post("/api/task/{id}", this.taskId + 2)
@@ -159,7 +160,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.SUBMIT_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .post("/api/task/{id}", this.taskId + 2)
@@ -177,7 +179,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .put("/api/task/{id}", this.taskId)
@@ -196,7 +199,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .put("/api/task/{id}", this.taskId + 1)
@@ -212,7 +216,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.CRUD_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "sql", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "sql", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .put("/api/task/{id}", this.taskId)
@@ -243,7 +248,8 @@ class TaskControllerTest {
             .port(port)
             .header(AuthConstants.AUTH_TOKEN_HEADER_NAME, ClientSetupExtension.SUBMIT_API_KEY)
             .contentType(ContentType.JSON)
-            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
+            .body(new ModifyTaskDto<>(this.taskGroupId, BigDecimal.TWO, "datalog", TaskStatus.APPROVED,
+                new ModifyDatalogTaskDto("human2(X) :- person(X).", "human2(X)?;person(X)?", "person(mike).")))
             // WHEN
             .when()
             .put("/api/task/{id}", this.taskId)
