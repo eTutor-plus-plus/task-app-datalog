@@ -1,6 +1,6 @@
-# eTutor Task-App: Datalog
+# eTutor Task-App: Datalog / ASP
 
-This application provides a REST-interface for following task type: datalog.
+This application provides a REST-interface for following task types: datalog, asp.
 
 ## Development
 

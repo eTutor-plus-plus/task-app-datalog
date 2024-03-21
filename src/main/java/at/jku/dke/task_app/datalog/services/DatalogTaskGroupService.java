@@ -71,7 +71,9 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     @Override
     protected TaskGroupModificationResponseDto mapToReturnData(DatalogTaskGroup taskGroup, boolean create) {
         StringBuilder list = new StringBuilder("<ul>");
-        String[] facts = taskGroup.getDiagnoseFacts().split("\\.");
+        String diagnose = taskGroup.getDiagnoseFacts().replaceAll("(?m)^%.*", ""); // remove comments
+
+        String[] facts = diagnose.split("\\.");
 
         Set<String> alreadyUsed = new HashSet<>();
         for (String fact : facts) {

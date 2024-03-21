@@ -1,117 +1,19 @@
 package at.jku.dke.task_app.datalog.evaluation;
 
-import at.jku.dke.etutor.task_app.dto.CriterionDto;
 import at.jku.dke.etutor.task_app.dto.GradingDto;
-import at.jku.dke.etutor.task_app.dto.SubmissionMode;
 import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
-import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
-import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
-import at.jku.dke.task_app.datalog.evaluation.analysis.DatalogAnalysisImpl;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.AnalysisException;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
-import at.jku.dke.task_app.datalog.evaluation.grading.DatalogGrading;
-import jakarta.persistence.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.MessageSource;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.util.HtmlUtils;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
- * Service that evaluates submissions.
+ * Service for evaluating submissions.
+ *
+ * @param <T> The type of the submission.
  */
-@Service
-public class EvaluationService {
-    private static final Logger LOG = LoggerFactory.getLogger(EvaluationService.class);
-
-    private final DatalogTaskRepository taskRepository;
-    private final MessageSource messageSource;
-    private final DatalogExecutor executor;
-
+public interface EvaluationService<T> {
     /**
-     * Creates a new instance of class {@link EvaluationService}.
-     *
-     * @param taskRepository The task repository.
-     * @param messageSource  The message source.
-     * @param executor       The datalog executor.
-     */
-    public EvaluationService(DatalogTaskRepository taskRepository, MessageSource messageSource, DatalogExecutor executor) {
-        this.taskRepository = taskRepository;
-        this.messageSource = messageSource;
-        this.executor = executor;
-    }
-
-    /**
-     * Evaluates a input.
+     * Evaluates a datalog input.
      *
      * @param submission The input to evaluate.
      * @return The evaluation result.
      */
-    @Transactional
-    public GradingDto evaluate(SubmitSubmissionDto<DatalogSubmissionDto> submission) {
-        // find task
-        var task = this.taskRepository.findByIdWithTaskGroup(submission.taskId())
-            .orElseThrow(() -> new EntityNotFoundException("Task " + submission.taskId() + " does not exist."));
-
-        // prepare
-        LOG.info("Evaluating input for task {} with mode {} and feedback-level {}", submission.taskId(), submission.mode(), submission.feedbackLevel());
-        Locale locale = Locale.of(submission.language());
-
-        String facts = submission.mode() == SubmissionMode.SUBMIT ?
-            task.getTaskGroup().getSubmissionFacts() :
-            task.getTaskGroup().getDiagnoseFacts();
-        boolean encodeFacts = submission.mode() == SubmissionMode.SUBMIT;
-        DatalogExecutorImpl.ExecutionResult solutionResult;
-        DatalogExecutorImpl.ExecutionResult submissionResult;
-
-        // execute submission
-        try {
-            submissionResult = this.executor.execute(facts, submission.submission().input(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
-        } catch (SyntaxException ex) {
-            LOG.warn("Syntax error in input for task {}", submission.taskId());
-            List<CriterionDto> criteria = new ArrayList<>();
-            criteria.add(new CriterionDto(
-                this.messageSource.getMessage("criterium.syntax", null, locale),
-                null,
-                false,
-                "<pre>" + HtmlUtils.htmlEscape(ex.getMessage()) + "</pre>"));
-            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, this.messageSource.getMessage("syntaxError", null, locale), criteria);
-        } catch (ExecutionException | IOException ex) {
-            LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating input for task " + submission.taskId(), ex);
-        }
-
-        // execute solution
-        if (submission.mode() == SubmissionMode.RUN) {
-            solutionResult = submissionResult;
-        } else {
-            try {
-                solutionResult = this.executor.execute(facts, task.getSolution(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
-            } catch (ExecutionException | IOException ex) {
-                LOG.error("Error while evaluating solution for task {}", submission.taskId(), ex);
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating solution for task " + submission.taskId(), ex);
-            }
-        }
-
-        // analyze, grade, feedback
-        try {
-            var analysis = new DatalogAnalysisImpl(solutionResult.result(), submissionResult.result());
-            var grading = new DatalogGrading(task, analysis);
-            var reporter = new DatalogReport(this.messageSource, locale, submission.mode(), submission.feedbackLevel(), analysis, submissionResult.output(), grading);
-            return new GradingDto(task.getMaxPoints(), grading.getPoints(), reporter.getGeneralFeedback(), reporter.getCriteria());
-        } catch (AnalysisException ex) {
-            LOG.error("Error while analyzing query result for task {}", submission.taskId(), ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while analysing query result for task " + submission.taskId(), ex);
-        }
-    }
+    GradingDto evaluate(SubmitSubmissionDto<T> submission);
 }

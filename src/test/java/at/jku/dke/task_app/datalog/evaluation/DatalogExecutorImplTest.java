@@ -90,12 +90,48 @@ class DatalogExecutorImplTest {
     }
 
     @Test
+    void executeRules_valid() throws IOException, ExecutionException {
+        // Arrange
+        var executor = new DatalogExecutorImpl(new DatalogSettings());
+
+        // Act
+        var result = executor.execute("""
+            arc(a1, a2).
+            arc(a2, a3).
+            """, """
+            path(X,Y) :- arc(X,Y).
+            path(X,Y) :- path(X,Z), arc(Z,Y).
+            """, null);
+
+        // Assert
+        assertThat(result)
+            .contains("path(a1,a2)")
+            .contains("path(a1,a3)")
+            .contains("path(a2,a3)");
+    }
+
+    @Test
+    void executeRules_syntaxError() {
+        // Arrange
+        var executor = new DatalogExecutorImpl(new DatalogSettings());
+
+        // Act & Assert
+        assertThrows(SyntaxException.class, () -> executor.execute("""
+            arc(a1, a2).
+            arc(a2, a3).
+            """, """
+            path(X,Y) - arc(X,Y).
+            path(X,Y) :- path(X,Z), arc(Z,Y).
+            """, null));
+    }
+
+    @Test
     void executeQuery_valid() throws IOException, ExecutionException {
         // Arrange
         var executor = new DatalogExecutorImpl(new DatalogSettings());
 
         // Act
-        var result = executor.execute("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) :- path(X,Z), arc(Z,Y).", List.of("path(X,Y)?"));
+        var result = executor.query("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) :- path(X,Z), arc(Z,Y).", List.of("path(X,Y)?"));
 
         // Assert
         assertThat(result.result()).containsEntry("path", Arrays.asList("a10, a20", "a10, a30", "a20, a30"));
@@ -107,7 +143,7 @@ class DatalogExecutorImplTest {
         var executor = new DatalogExecutorImpl(new DatalogSettings());
 
         // Act
-        var result = executor.execute("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) :- path(X,Z), arc(Z,Y).", List.of("path(X,Y)?", "arc(X,Y)?"), List.of(), false);
+        var result = executor.query("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) :- path(X,Z), arc(Z,Y).", List.of("path(X,Y)?", "arc(X,Y)?"), List.of(), false);
 
         // Assert
         assertThat(result.result())
@@ -121,7 +157,7 @@ class DatalogExecutorImplTest {
         var executor = new DatalogExecutorImpl(new DatalogSettings());
 
         // Act & Assert
-        assertThrows(SyntaxException.class, () -> executor.execute("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) : path(X,Z), arc(Z,Y).", List.of("path(X,Y)?")));
+        assertThrows(SyntaxException.class, () -> executor.query("arc(a1, a2).arc(a2, a3).", "path(X,Y) :- arc(X,Y).path(X,Y) : path(X,Z), arc(Z,Y).", List.of("path(X,Y)?")));
     }
 
     @Test
@@ -130,6 +166,6 @@ class DatalogExecutorImplTest {
         var executor = new DatalogExecutorImpl(new DatalogSettings());
 
         // Act & Assert
-        assertThrowsExactly(ExecutionException.class, () -> executor.execute("arc(a1, a2).arc(a2, a3).", "a(X, 1) v a(X, 2) :- arc(X).", List.of("path(X,Y)?")));
+        assertThrowsExactly(ExecutionException.class, () -> executor.query("arc(a1, a2).arc(a2, a3).", "a(X, 1) v a(X, 2) :- arc(X).", List.of("path(X,Y)?")));
     }
 }

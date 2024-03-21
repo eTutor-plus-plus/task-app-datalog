@@ -1,22 +1,18 @@
 package at.jku.dke.task_app.datalog.services;
 
-import at.jku.dke.etutor.task_app.dto.ModifyTaskDto;
-import at.jku.dke.etutor.task_app.dto.TaskModificationResponseDto;
+import at.jku.dke.etutor.task_app.dto.*;
 import at.jku.dke.etutor.task_app.services.BaseTaskInGroupService;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
+import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskDto;
-import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
-import jakarta.validation.ValidationException;
+import at.jku.dke.task_app.datalog.evaluation.dlg.DatalogEvaluationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,18 +22,18 @@ import java.util.List;
 @Service
 public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, DatalogTaskGroup, ModifyDatalogTaskDto> {
 
-    private final DatalogExecutor executor;
+    private final DatalogEvaluationService evaluationService;
 
     /**
      * Creates a new instance of class {@link DatalogTaskService}.
      *
      * @param repository          The task repository.
      * @param taskGroupRepository The task group repository.
-     * @param executor            The datalog executor.
+     * @param evaluationService   The datalog evaluation service.
      */
-    public DatalogTaskService(DatalogTaskRepository repository, DatalogTaskGroupRepository taskGroupRepository, DatalogExecutor executor) {
+    public DatalogTaskService(DatalogTaskRepository repository, DatalogTaskGroupRepository taskGroupRepository, DatalogEvaluationService evaluationService) {
         super(repository, taskGroupRepository);
-        this.executor = executor;
+        this.evaluationService = evaluationService;
     }
 
     @Override
@@ -45,7 +41,6 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         if (!modifyTaskDto.taskType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
 
-        this.validate(modifyTaskDto.additionalData().solution());
         var task = new DatalogTask(
             modifyTaskDto.additionalData().solution(),
             this.convertStringToList(modifyTaskDto.additionalData().query()),
@@ -60,8 +55,6 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
     protected void updateTask(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> modifyTaskDto) {
         if (!modifyTaskDto.taskType().equals("datalog"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid task type.");
-        if (!task.getSolution().equals(modifyTaskDto.additionalData().solution()))
-            this.validate(modifyTaskDto.additionalData().solution());
 
         task.setSolution(modifyTaskDto.additionalData().solution());
         task.setQuery(this.convertStringToList(modifyTaskDto.additionalData().query()));
@@ -74,22 +67,18 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         return new TaskModificationResponseDto(null, null);
     }
 
-    /**
-     * Validates the given facts.
-     *
-     * @param facts The facts to validate.
-     * @throws ValidationException If the facts are not a valid datalog program.
-     */
-    private void validate(String facts) {
-        try {
-            this.executor.execute(facts, new String[0]);
-        } catch (SyntaxException ex) {
-            LOG.warn("Failed to parse datalog program.", ex);
-            throw new ValidationException("Invalid datalog program: " + ex.getMessage());
-        } catch (IOException | ExecutionException ex) {
-            LOG.error("Failed to validate datalog program.", ex);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to validate datalog program.", ex);
-        }
+    @Override
+    protected void afterCreate(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> dto) {
+        var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (!result.points().equals(result.maxPoints()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
+    }
+
+    @Override
+    protected void afterUpdate(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> dto) {
+        var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (!result.points().equals(result.maxPoints()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
     }
 
     /**
@@ -110,5 +99,19 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
         task.setMissingPredicateStrategy(modifyTaskDto.additionalData().missingPredicateStrategy());
         task.setMissingFactStrategy(modifyTaskDto.additionalData().missingFactStrategy());
         task.setSuperfluousFactStrategy(modifyTaskDto.additionalData().superfluousFactStrategy());
+    }
+
+    private static String convertGradingDtoToString(GradingDto grading) {
+        var sb = new StringBuilder(grading.generalFeedback());
+        grading.criteria().stream()
+            .filter(c -> !c.passed())
+            .filter(c -> !c.feedback().contains("<style>"))
+            .forEach(c -> {
+                sb.append("\n");
+                sb.append(c.name());
+                sb.append(": ");
+                sb.append(c.feedback());
+            });
+        return sb.toString();
     }
 }
