@@ -7,12 +7,22 @@ import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Interface for the datalog executor.
  */
 public interface DatalogExecutor {
+
+    /**
+     * Executes the datalog binary with the given arguments.
+     *
+     * @param args  The arguments for the datalog binary.
+     * @return The output of the datalog binary.
+     * @throws IOException        If an I/O error occurs.
+     * @throws ExecutionException If the process execution fails.
+     */
+    ExecutionOutput execute(String... args) throws IOException, ExecutionException;
+
     /**
      * Executes the datalog binary with the given input.
      *
@@ -81,4 +91,5 @@ public interface DatalogExecutor {
      */
     record ExecutionResult(String output, Map<String, List<String>> result) {
     }
+
 }

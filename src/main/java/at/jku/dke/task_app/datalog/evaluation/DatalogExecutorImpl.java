@@ -42,28 +42,20 @@ public class DatalogExecutorImpl implements DatalogExecutor {
     }
 
     /**
-     * Executes the datalog binary with the given input.
+     * Executes the datalog binary with the given arguments.
      *
-     * @param input The input for the datalog binary.
-     * @param args  Additional arguments for the datalog binary (e.g. -cautious).
+     * @param args The arguments for the datalog binary.
      * @return The output of the datalog binary.
      * @throws IOException        If an I/O error occurs.
      * @throws ExecutionException If the process execution fails.
      */
     @Override
-    public ExecutionOutput execute(String input, String[] args) throws IOException, ExecutionException {
-        // Write file contents
-        var id = UUID.randomUUID().toString();
-        File file = File.createTempFile(id, ".dlv", this.workingDirectory.toFile());
-        LOG.debug("Writing input {} to temporary file {}", input, file);
-        Files.writeString(file.toPath(), input);
-
+    public ExecutionOutput execute(String... args) throws IOException, ExecutionException {
         // Build process
+        var id = UUID.randomUUID().toString();
         List<String> cmd = new ArrayList<>();
         cmd.add(this.datalogSettings.getExecutable());
-        cmd.add("-silent");
         cmd.addAll(Arrays.stream(args).toList());
-        cmd.add(file.getAbsolutePath());
         var successFile = File.createTempFile(id, ".success", this.workingDirectory.toFile());
         var errorFile = File.createTempFile(id, ".error", this.workingDirectory.toFile());
         var pb = new ProcessBuilder(cmd)
@@ -93,16 +85,52 @@ public class DatalogExecutorImpl implements DatalogExecutor {
             output = Files.readString(successFile.toPath());
         } else {
             output = Files.readString(errorFile.toPath());
-            output = output.replace(file.getAbsolutePath(), "submission.dlv");
         }
 
         // Clean up
-        file.delete();
         successFile.delete();
         errorFile.delete();
 
         // Return
         return new ExecutionOutput(output, process.exitValue());
+    }
+
+    /**
+     * Executes the datalog binary with the given input.
+     *
+     * @param input The input for the datalog binary.
+     * @param args  Additional arguments for the datalog binary (e.g. -cautious).
+     * @return The output of the datalog binary.
+     * @throws IOException        If an I/O error occurs.
+     * @throws ExecutionException If the process execution fails.
+     */
+    @Override
+    public ExecutionOutput execute(String input, String[] args) throws IOException, ExecutionException {
+        // Write file contents
+        var id = UUID.randomUUID().toString();
+        File file = File.createTempFile(id, ".dlv", this.workingDirectory.toFile());
+        LOG.debug("Writing input {} to temporary file {}", input, file);
+        Files.writeString(file.toPath(), input);
+
+        // Build arguments
+        List<String> cmd = new ArrayList<>();
+        cmd.add("-silent");
+        cmd.addAll(Arrays.stream(args).toList());
+        cmd.add(file.getAbsolutePath());
+
+        // Execute process
+        var result = this.execute(cmd.toArray(new String[0]));
+
+        // Read output
+        String output = result.output();
+        if (result.exitCode() != 0)
+            output = output.replace(file.getAbsolutePath(), "submission.dlv");
+
+        // Clean up
+        file.delete();
+
+        // Return
+        return new ExecutionOutput(output, result.exitCode());
     }
 
     /**
