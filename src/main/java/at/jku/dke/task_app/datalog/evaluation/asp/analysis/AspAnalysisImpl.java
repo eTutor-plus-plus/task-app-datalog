@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  */
 public class AspAnalysisImpl implements AspAnalysis {
 
-    private static final Pattern MODEL_PATTERN = Pattern.compile("\\{(.*)\\}", Pattern.MULTILINE);
+    private static final Pattern MODEL_PATTERN = Pattern.compile("\\{([^\\{\\}]*)\\}", Pattern.MULTILINE);
     private static final Pattern PREDICATE_PATTERN = Pattern.compile("([\\w\\d]+?)\\((.*?)\\)", Pattern.MULTILINE);
     private boolean isCorrect;
     private boolean hasSameAmountOfModels;
@@ -30,6 +30,7 @@ public class AspAnalysisImpl implements AspAnalysis {
      */
     public AspAnalysisImpl(String solutionResult, String submissionResult) throws AnalysisException {
         this.isCorrect = false;
+        this.hasSameAmountOfModels = false;
         this.solutionResult = parseResult(solutionResult);
         this.submissionResult = parseResult(submissionResult);
         this.missingModels = new ArrayList<>();

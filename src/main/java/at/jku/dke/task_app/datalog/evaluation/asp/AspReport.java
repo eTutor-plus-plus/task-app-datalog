@@ -91,7 +91,7 @@ public class AspReport {
     }
 
     private Optional<CriterionDto> createCountCriterion() {
-        if (this.mode == SubmissionMode.RUN)
+        if (this.mode == SubmissionMode.RUN || this.feedbackLevel == 0)
             return Optional.empty();
 
         return Optional.of(new CriterionDto(

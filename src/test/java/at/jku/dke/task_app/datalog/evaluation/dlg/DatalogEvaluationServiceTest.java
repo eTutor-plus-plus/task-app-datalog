@@ -7,7 +7,6 @@ import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
-import at.jku.dke.task_app.datalog.evaluation.dlg.DatalogEvaluationService;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
 import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
 import jakarta.persistence.EntityNotFoundException;
@@ -54,11 +53,12 @@ class DatalogEvaluationServiceTest {
         task.setTaskGroup(new DatalogTaskGroup("diagnose", "submit"));
 
         when(repository.findByIdWithTaskGroup(any())).thenReturn(Optional.of(task));
-        when(exec.query(anyString(), anyString(), any(), any(), anyBoolean())).thenThrow(new ExecutionException(""));
+        when(exec.query(anyString(), eq("myInput"), any(), any(), anyBoolean())).thenReturn(new DatalogExecutor.ExecutionResult("", Map.of()));
+        when(exec.query(anyString(), eq("mySolution"), any(), any(), anyBoolean())).thenThrow(new ExecutionException(""));
 
         // Act & Assert
         assertThrows(ResponseStatusException.class,
-            () -> service.evaluate(new SubmitSubmissionDto<>(null, null, 1L, "de", SubmissionMode.SUBMIT, 1, new DatalogSubmissionDto(""))),
+            () -> service.evaluate(new SubmitSubmissionDto<>(null, null, 1L, "de", SubmissionMode.SUBMIT, 1, new DatalogSubmissionDto("myInput"))),
             "Error while evaluating solution for task 1");
     }
 
