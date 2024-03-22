@@ -5,6 +5,7 @@ import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.entities.DatalogSubmission;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.evaluation.EvaluationService;
+import at.jku.dke.task_app.datalog.evaluation.dlg.DatalogEvaluationService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,7 +43,7 @@ class DatalogSubmissionServiceTest {
     @Test
     void evaluate() {
         // Arrange
-        var evalService = mock(EvaluationService.class);
+        var evalService = mock(DatalogEvaluationService.class);
         var dto = new SubmitSubmissionDto<>("test-user", "test-quiz", 7L, "de", SubmissionMode.SUBMIT, 3, new DatalogSubmissionDto("test-input"));
         var service = new DatalogSubmissionService(null, null, evalService);
 

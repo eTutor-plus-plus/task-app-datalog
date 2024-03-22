@@ -42,28 +42,20 @@ public class DatalogExecutorImpl implements DatalogExecutor {
     }
 
     /**
-     * Executes the datalog binary with the given input.
+     * Executes the datalog binary with the given arguments.
      *
-     * @param input The input for the datalog binary.
-     * @param args  Additional arguments for the datalog binary (e.g. -cautious).
-     * @return The output of the datalog binary. The first element of the pair is the output, the second element is the exit code.
+     * @param args The arguments for the datalog binary.
+     * @return The output of the datalog binary.
      * @throws IOException        If an I/O error occurs.
      * @throws ExecutionException If the process execution fails.
      */
     @Override
-    public ExecutionOutput execute(String input, String[] args) throws IOException, ExecutionException {
-        // Write file contents
-        var id = UUID.randomUUID().toString();
-        File file = File.createTempFile(id, ".dlv", this.workingDirectory.toFile());
-        LOG.debug("Writing input {} to temporary file {}", input, file);
-        Files.writeString(file.toPath(), input);
-
+    public ExecutionOutput execute(String... args) throws IOException, ExecutionException {
         // Build process
+        var id = UUID.randomUUID().toString();
         List<String> cmd = new ArrayList<>();
         cmd.add(this.datalogSettings.getExecutable());
-        cmd.add("-silent");
         cmd.addAll(Arrays.stream(args).toList());
-        cmd.add(file.getAbsolutePath());
         var successFile = File.createTempFile(id, ".success", this.workingDirectory.toFile());
         var errorFile = File.createTempFile(id, ".error", this.workingDirectory.toFile());
         var pb = new ProcessBuilder(cmd)
@@ -93,16 +85,79 @@ public class DatalogExecutorImpl implements DatalogExecutor {
             output = Files.readString(successFile.toPath());
         } else {
             output = Files.readString(errorFile.toPath());
-            output = output.replace(file.getAbsolutePath(), "submission.dlv");
         }
 
         // Clean up
-        file.delete();
         successFile.delete();
         errorFile.delete();
 
         // Return
         return new ExecutionOutput(output, process.exitValue());
+    }
+
+    /**
+     * Executes the datalog binary with the given input.
+     *
+     * @param input The input for the datalog binary.
+     * @param args  Additional arguments for the datalog binary (e.g. -cautious).
+     * @return The output of the datalog binary.
+     * @throws IOException        If an I/O error occurs.
+     * @throws ExecutionException If the process execution fails.
+     */
+    @Override
+    public ExecutionOutput execute(String input, String[] args) throws IOException, ExecutionException {
+        // Write file contents
+        var id = UUID.randomUUID().toString();
+        File file = File.createTempFile(id, ".dlv", this.workingDirectory.toFile());
+        LOG.debug("Writing input {} to temporary file {}", input, file);
+        Files.writeString(file.toPath(), input);
+
+        // Build arguments
+        List<String> cmd = new ArrayList<>();
+        cmd.add("-silent");
+        cmd.addAll(Arrays.stream(args).toList());
+        cmd.add(file.getAbsolutePath());
+
+        // Execute process
+        var result = this.execute(cmd.toArray(new String[0]));
+
+        // Read output
+        String output = result.output();
+        if (result.exitCode() != 0)
+            output = output.replace(file.getAbsolutePath(), "submission.dlv");
+
+        // Clean up
+        file.delete();
+
+        // Return
+        return new ExecutionOutput(output, result.exitCode());
+    }
+
+    /**
+     * Executes the datalog binary with the given input (with -nofacts flag).
+     *
+     * @param facts The datalog facts from the task group.
+     * @param rules The datalog rules from the submission.
+     * @param maxN  Limit integers to [0,<maxN>] (-N option). (can be {@code null})
+     * @return The output of the datalog execution.
+     * @throws IOException        If an I/O error occurs.
+     * @throws ExecutionException If the process execution fails.
+     */
+    @Override
+    public String execute(String facts, String rules, Integer maxN) throws IOException, ExecutionException {
+        String input = facts + System.lineSeparator() + rules;
+        String[] args = maxN != null ? new String[]{"-nofacts", "-N=" + maxN} : new String[]{"-nofacts"};
+        var rawResult = this.execute(input, args);
+        if (rawResult.exitCode() != 0) {
+            if (rawResult.output().contains(".dlv")) {
+                LOG.debug("Datalog execution failed with syntax error: {}", rawResult.output());
+                throw new SyntaxException(rawResult.output());
+            }
+
+            LOG.warn("Datalog execution failed with error output {}", rawResult.output());
+            throw new ExecutionException("Datalog execution failed with error output " + rawResult.output());
+        }
+        return rawResult.output();
     }
 
     /**
@@ -117,8 +172,8 @@ public class DatalogExecutorImpl implements DatalogExecutor {
      * @throws SyntaxException    If the datalog execution fails with a syntax error.
      */
     @Override
-    public ExecutionResult execute(String facts, String rules, List<String> queries) throws IOException, ExecutionException {
-        return execute(facts, rules, queries, Collections.emptyList(), true);
+    public ExecutionResult query(String facts, String rules, List<String> queries) throws IOException, ExecutionException {
+        return query(facts, rules, queries, Collections.emptyList(), true);
     }
 
     /**
@@ -135,7 +190,7 @@ public class DatalogExecutorImpl implements DatalogExecutor {
      * @throws SyntaxException    If the datalog execution fails with a syntax error.
      */
     @Override
-    public ExecutionResult execute(String facts, String rules, List<String> queries, List<TermDescription> uncheckedTerms, boolean encodeFacts) throws IOException, ExecutionException {
+    public ExecutionResult query(String facts, String rules, List<String> queries, List<TermDescription> uncheckedTerms, boolean encodeFacts) throws IOException, ExecutionException {
         if (encodeFacts)
             facts = this.encodeFacts(facts, uncheckedTerms);
 

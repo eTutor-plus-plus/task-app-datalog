@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DatalogSettingsTest {
 

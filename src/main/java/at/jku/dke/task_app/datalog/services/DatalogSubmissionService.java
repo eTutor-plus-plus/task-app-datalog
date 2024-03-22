@@ -8,7 +8,7 @@ import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogSubmissionRepository;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
-import at.jku.dke.task_app.datalog.evaluation.EvaluationService;
+import at.jku.dke.task_app.datalog.evaluation.dlg.DatalogEvaluationService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class DatalogSubmissionService extends BaseSubmissionService<DatalogTask, DatalogSubmission, DatalogSubmissionDto> {
 
-    private final EvaluationService evaluationService;
+    private final DatalogEvaluationService evaluationService;
 
     /**
      * Creates a new instance of class {@link DatalogSubmissionService}.
@@ -26,7 +26,7 @@ public class DatalogSubmissionService extends BaseSubmissionService<DatalogTask,
      * @param taskRepository       The task repository.
      * @param evaluationService    The evaluation service.
      */
-    public DatalogSubmissionService(DatalogSubmissionRepository submissionRepository, DatalogTaskRepository taskRepository, EvaluationService evaluationService) {
+    public DatalogSubmissionService(DatalogSubmissionRepository submissionRepository, DatalogTaskRepository taskRepository, DatalogEvaluationService evaluationService) {
         super(submissionRepository, taskRepository);
         this.evaluationService = evaluationService;
     }

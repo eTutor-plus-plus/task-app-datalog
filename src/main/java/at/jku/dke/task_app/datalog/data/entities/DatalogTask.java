@@ -2,7 +2,9 @@ package at.jku.dke.task_app.datalog.data.entities;
 
 import at.jku.dke.etutor.task_app.data.entities.BaseTaskInGroup;
 import at.jku.dke.etutor.task_app.dto.TaskStatus;
+import at.jku.dke.task_app.datalog.data.converters.GradingStrategyConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -36,10 +38,35 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
     @Column(name = "unchecked_term_raw")
     private String uncheckedTermsRaw;
 
+    @NotNull
+    @Column(name = "missing_predicate_penalty", nullable = false, precision = 5, scale = 2)
+    private BigDecimal missingPredicatePenalty;
+
+    @NotNull
+    @Column(name = "missing_fact_penalty", nullable = false, precision = 5, scale = 2)
+    private BigDecimal missingFactPenalty;
+
+    @NotNull
+    @Column(name = "superfluous_fact_penalty", nullable = false, precision = 5, scale = 2)
+    private BigDecimal superfluousFactPenalty;
+
+    @Convert(converter = GradingStrategyConverter.class)
+    @Column(name = "missing_predicate_strategy", columnDefinition = "grading_strategy not null")
+    private GradingStrategy missingPredicateStrategy;
+
+    @Convert(converter = GradingStrategyConverter.class)
+    @Column(name = "missing_fact_strategy", columnDefinition = "grading_strategy not null")
+    private GradingStrategy missingFactStrategy;
+
+    @Convert(converter = GradingStrategyConverter.class)
+    @Column(name = "superfluous_fact_strategy", columnDefinition = "grading_strategy not null")
+    private GradingStrategy superfluousFactStrategy;
+
     /**
      * Creates a new instance of class {@link DatalogTask}.
      */
     public DatalogTask() {
+        this.setDefaultGradingValues();
     }
 
     /**
@@ -54,6 +81,7 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
         this.query = query;
         this.uncheckedTermsRaw = uncheckedTerms;
         this.uncheckedTerms = convertStringToTermDescriptionList(uncheckedTerms);
+        this.setDefaultGradingValues();
     }
 
     /**
@@ -72,6 +100,7 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
         this.query = query;
         this.uncheckedTermsRaw = uncheckedTerms;
         this.uncheckedTerms = convertStringToTermDescriptionList(uncheckedTerms);
+        this.setDefaultGradingValues();
     }
 
     /**
@@ -91,6 +120,7 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
         this.query = query;
         this.uncheckedTermsRaw = uncheckedTerms;
         this.uncheckedTerms = convertStringToTermDescriptionList(uncheckedTerms);
+        this.setDefaultGradingValues();
     }
 
     /**
@@ -164,6 +194,124 @@ public class DatalogTask extends BaseTaskInGroup<DatalogTaskGroup> {
     public void setUncheckedTermsRaw(String uncheckedTermsRaw) {
         this.uncheckedTermsRaw = uncheckedTermsRaw;
         this.uncheckedTerms = convertStringToTermDescriptionList(uncheckedTermsRaw);
+    }
+
+    /**
+     * Gets the missing predicate strategy.
+     *
+     * @return The missing predicate strategy.
+     */
+    public GradingStrategy getMissingPredicateStrategy() {
+        return missingPredicateStrategy;
+    }
+
+    /**
+     * Sets the missing predicate strategy.
+     *
+     * @param missingPredicateStrategy The missing predicate strategy.
+     */
+    public void setMissingPredicateStrategy(GradingStrategy missingPredicateStrategy) {
+        this.missingPredicateStrategy = missingPredicateStrategy;
+    }
+
+    /**
+     * Gets the missing fact strategy.
+     *
+     * @return The missing fact strategy.
+     */
+    public GradingStrategy getMissingFactStrategy() {
+        return missingFactStrategy;
+    }
+
+    /**
+     * Sets the missing fact strategy.
+     *
+     * @param missingFactStrategy The missing fact strategy.
+     */
+    public void setMissingFactStrategy(GradingStrategy missingFactStrategy) {
+        this.missingFactStrategy = missingFactStrategy;
+    }
+
+    /**
+     * Gets the superfluous fact strategy.
+     *
+     * @return The superfluous fact strategy.
+     */
+    public GradingStrategy getSuperfluousFactStrategy() {
+        return superfluousFactStrategy;
+    }
+
+    /**
+     * Sets the superfluous fact strategy.
+     *
+     * @param superfluousFactStrategy The superfluous fact strategy.
+     */
+    public void setSuperfluousFactStrategy(GradingStrategy superfluousFactStrategy) {
+        this.superfluousFactStrategy = superfluousFactStrategy;
+    }
+
+    /**
+     * Gets the missing predicate penalty.
+     *
+     * @return The missing predicate penalty.
+     */
+    public BigDecimal getMissingPredicatePenalty() {
+        return missingPredicatePenalty;
+    }
+
+    /**
+     * Sets the missing predicate penalty.
+     *
+     * @param missingPredicatePenalty The missing predicate penalty.
+     */
+    public void setMissingPredicatePenalty(BigDecimal missingPredicatePenalty) {
+        this.missingPredicatePenalty = missingPredicatePenalty;
+    }
+
+    /**
+     * Gets the missing fact penalty.
+     *
+     * @return The missing fact penalty.
+     */
+    public BigDecimal getMissingFactPenalty() {
+        return missingFactPenalty;
+    }
+
+    /**
+     * Sets the missing fact penalty.
+     *
+     * @param missingFactPenalty The missing fact penalty.
+     */
+    public void setMissingFactPenalty(BigDecimal missingFactPenalty) {
+        this.missingFactPenalty = missingFactPenalty;
+    }
+
+    /**
+     * Gets the superfluous fact penalty.
+     *
+     * @return The superfluous fact penalty.
+     */
+    public BigDecimal getSuperfluousFactPenalty() {
+        return superfluousFactPenalty;
+    }
+
+    /**
+     * Sets the superfluous fact penalty.
+     *
+     * @param superfluousFactPenalty The superfluous fact penalty.
+     */
+    public void setSuperfluousFactPenalty(BigDecimal superfluousFactPenalty) {
+        this.superfluousFactPenalty = superfluousFactPenalty;
+    }
+
+    private void setDefaultGradingValues() {
+        this.missingPredicatePenalty = BigDecimal.ZERO;
+        this.missingFactPenalty = BigDecimal.ZERO;
+        this.superfluousFactPenalty = BigDecimal.ZERO;
+
+        this.missingPredicateStrategy = GradingStrategy.KO;
+        this.missingFactStrategy = GradingStrategy.KO;
+        this.superfluousFactStrategy = GradingStrategy.KO;
     }
 
     /**

@@ -1,25 +1,23 @@
 package at.jku.dke.task_app.datalog.services;
 
+import at.jku.dke.etutor.task_app.dto.GradingDto;
 import at.jku.dke.etutor.task_app.dto.ModifyTaskDto;
 import at.jku.dke.etutor.task_app.dto.TaskStatus;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTask;
 import at.jku.dke.task_app.datalog.data.entities.TermDescription;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskDto;
-import at.jku.dke.task_app.datalog.evaluation.DatalogExecutorImpl;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.ExecutionException;
-import at.jku.dke.task_app.datalog.evaluation.exceptions.SyntaxException;
+import at.jku.dke.task_app.datalog.evaluation.dlg.DatalogEvaluationService;
 import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class DatalogTaskServiceTest {
 
@@ -31,8 +29,9 @@ class DatalogTaskServiceTest {
             hasChild(X, Y)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
+        when(evalService.evaluate(any())).thenReturn(new GradingDto(BigDecimal.TEN, BigDecimal.TEN, "", List.of()));
 
         // Act
         var result = service.createTask(3, dto);
@@ -53,35 +52,23 @@ class DatalogTaskServiceTest {
             hasChild(X, Y)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
 
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> service.createTask(3, dto));
     }
 
     @Test
-    void createTask_invalidSyntax() throws IOException, ExecutionException {
+    void createTask_invalidSyntax() {
         // Arrange
         var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", "hasChild(X, Y)?", "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
-        when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
+        when(evalService.evaluate(any())).thenReturn(new GradingDto(BigDecimal.TEN, BigDecimal.ZERO, "invalid syntax", List.of()));
 
         // Act & Assert
-        assertThrows(ValidationException.class, () -> service.createTask(3, dto));
-    }
-
-    @Test
-    void createTask_executorProblem() throws IOException, ExecutionException {
-        // Arrange
-        var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", "hasChild(X, Y)?", "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
-        when(exec.execute(anyString(), any())).thenThrow(new ExecutionException("Invalid executor path."));
-
-        // Act & Assert
-        assertThrows(ResponseStatusException.class, () -> service.createTask(3, dto));
+        assertThrows(ResponseStatusException.class, () -> service.afterCreate(new DatalogTask(), dto));
     }
     //#endregion
 
@@ -93,9 +80,10 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
+        when(evalService.evaluate(any())).thenReturn(new GradingDto(BigDecimal.TEN, BigDecimal.TEN, "", List.of()));
 
         // Act
         service.updateTask(task, dto);
@@ -116,8 +104,8 @@ class DatalogTaskServiceTest {
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
 
         // Act & Assert
@@ -125,53 +113,19 @@ class DatalogTaskServiceTest {
     }
 
     @Test
-    void updateTask_invalidSyntax() throws IOException, ExecutionException {
+    void updateTask_invalidSyntax() {
         // Arrange
         var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X).", """
             hasChild(X)?;
             parent(X)?
             """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
+        var evalService = mock(DatalogEvaluationService.class);
+        var service = new DatalogTaskService(null, null, evalService);
         var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
-        when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
+        when(evalService.evaluate(any())).thenReturn(new GradingDto(BigDecimal.TEN, BigDecimal.ZERO, "invalid syntax", List.of()));
 
         // Act & Assert
-        assertThrows(ValidationException.class, () -> service.updateTask(task, dto));
-    }
-
-    @Test
-    void updateTask_executorProblem() throws IOException, ExecutionException {
-        // Arrange
-        var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X).", """
-            hasChild(X)?;
-            parent(X)?
-            """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
-        var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X). parent(X) :- hasParent(_, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
-        when(exec.execute(anyString(), any())).thenThrow(new IOException("Some error."));
-
-        // Act & Assert
-        assertThrows(ResponseStatusException.class, () -> service.updateTask(task, dto));
-    }
-
-    @Test
-    void updateTask_notSolutionOnUnchanged() throws IOException, ExecutionException {
-        // Arrange
-        var dto = new ModifyTaskDto<>(3L, BigDecimal.TEN, "datalog", TaskStatus.APPROVED, new ModifyDatalogTaskDto("hasParent(X, Y) :- hasChild(Y, X).", """
-            hasChild(X)?;
-            parent(X)?
-            """, "hasChild(mike, _)."));
-        var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskService(null, null, exec);
-        var task = new DatalogTask("hasParent(X, Y) :- hasChild(Y, X).", List.of("hasChild(X, Y)?", "parent(X)?"), null);
-
-        // Act
-        service.updateTask(task, dto);
-
-        // Assert
-        verify(exec, times(0)).execute(anyString(), any());
+        assertThrows(ResponseStatusException.class, () -> service.afterCreate(task, dto));
     }
     //#endregion
 

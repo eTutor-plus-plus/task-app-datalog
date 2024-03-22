@@ -1,5 +1,6 @@
 package at.jku.dke.task_app.datalog.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -7,5 +8,5 @@ import jakarta.validation.constraints.NotNull;
  *
  * @param input The user input.
  */
-public record DatalogSubmissionDto(@NotNull String input) {
+public record DatalogSubmissionDto(@Schema(example = "child(X) :- hasChild(_, X).") @NotNull String input) {
 }

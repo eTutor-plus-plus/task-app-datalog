@@ -13,9 +13,13 @@ spring:
   jpa:
     show-sql: true
 
+# Springdoc
+springdoc:
+  show-actuator: true
+
 # Datalog
 datalog:
-  exe: ./bin/dlv-mac-m1 # Adjust to your OS
+  exe:
   maxExecutionTime: 10 # seconds
   factEncodingSuffix: 0
 

@@ -71,7 +71,9 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     @Override
     protected TaskGroupModificationResponseDto mapToReturnData(DatalogTaskGroup taskGroup, boolean create) {
         StringBuilder list = new StringBuilder("<ul>");
-        String[] facts = taskGroup.getDiagnoseFacts().split("\\.");
+        String diagnose = taskGroup.getDiagnoseFacts().replaceAll("(?m)^%.*", ""); // remove comments
+
+        String[] facts = diagnose.split("\\.");
 
         Set<String> alreadyUsed = new HashSet<>();
         for (String fact : facts) {
@@ -87,11 +89,11 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
             }
 
             var predicate = fact
-                    .substring(0, index)
-                    .replace("\n", "")
-                    .replace("\r", "")
-                    .replace("\t", "")
-                    .replace(" ", "");
+                .substring(0, index)
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "")
+                .replace(" ", "");
             if (alreadyUsed.contains(predicate))
                 continue;
 

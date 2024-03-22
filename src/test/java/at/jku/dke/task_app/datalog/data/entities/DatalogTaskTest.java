@@ -163,4 +163,88 @@ class DatalogTaskTest {
         assertThat(result).containsAll(expected);
     }
 
+    @Test
+    void getSetMissingPredicatePenalty() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = BigDecimal.TEN;
+
+        // Act
+        task.setMissingPredicatePenalty(expected);
+        var result = task.getMissingPredicatePenalty();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getSetMissingPredicateStrategy() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = GradingStrategy.EACH;
+
+        // Act
+        task.setMissingPredicateStrategy(expected);
+        var result = task.getMissingPredicateStrategy();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getSetMissingFactPenalty() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = BigDecimal.TEN;
+
+        // Act
+        task.setMissingFactPenalty(expected);
+        var result = task.getMissingFactPenalty();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getSetMissingFactStrategy() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = GradingStrategy.EACH;
+
+        // Act
+        task.setMissingFactStrategy(expected);
+        var result = task.getMissingFactStrategy();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getSetSuperfluousFactPenalty() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = BigDecimal.TEN;
+
+        // Act
+        task.setSuperfluousFactPenalty(expected);
+        var result = task.getSuperfluousFactPenalty();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getSetSuperfluousFactStrategy() {
+        // Arrange
+        var task = new DatalogTask();
+        var expected = GradingStrategy.EACH;
+
+        // Act
+        task.setSuperfluousFactStrategy(expected);
+        var result = task.getSuperfluousFactStrategy();
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
 }
