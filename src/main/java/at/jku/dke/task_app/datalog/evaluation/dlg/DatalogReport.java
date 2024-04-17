@@ -2,9 +2,9 @@ package at.jku.dke.task_app.datalog.evaluation.dlg;
 
 import at.jku.dke.etutor.task_app.dto.CriterionDto;
 import at.jku.dke.etutor.task_app.dto.SubmissionMode;
-import at.jku.dke.task_app.datalog.evaluation.dlg.analysis.DatalogAnalysis;
 import at.jku.dke.task_app.datalog.evaluation.DatalogFact;
 import at.jku.dke.task_app.datalog.evaluation.DatalogPredicate;
+import at.jku.dke.task_app.datalog.evaluation.dlg.analysis.DatalogAnalysis;
 import at.jku.dke.task_app.datalog.evaluation.dlg.grading.DatalogGrading;
 import at.jku.dke.task_app.datalog.evaluation.dlg.grading.GradingEntry;
 import org.springframework.context.MessageSource;
@@ -91,7 +91,7 @@ public class DatalogReport {
                 this.messageSource.getMessage("criterium.result", null, locale),
                 null,
                 this.mode == SubmissionMode.RUN || analysis.isCorrect(),
-                "<pre>" + this.rawOutput + "</pre>"
+                "<div style=\"font-family: monospace;\">" + this.rawOutput + "</div>"
             ));
         }
 
@@ -103,6 +103,13 @@ public class DatalogReport {
             return Optional.empty();
         if (listSupplier.get().isEmpty())
             return Optional.empty();
+        if (this.mode == SubmissionMode.SUBMIT)
+            return Optional.of(new CriterionDto(
+                this.messageSource.getMessage("criterium." + translationKey, null, locale),
+                this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null),
+                false,
+                this.messageSource.getMessage("criterium." + translationKey + ".noCount", null, locale)
+            ));
 
         return switch (this.feedbackLevel) {
             case 0 -> // no feedback
@@ -110,7 +117,7 @@ public class DatalogReport {
             case 1 -> // little feedback
                 Optional.of(new CriterionDto(
                     this.messageSource.getMessage("criterium." + translationKey, null, locale),
-                    this.mode == SubmissionMode.SUBMIT ? this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null) : null,
+                    null,
                     false,
                     this.messageSource.getMessage("criterium." + translationKey + ".noCount", null, locale)
                 ));
