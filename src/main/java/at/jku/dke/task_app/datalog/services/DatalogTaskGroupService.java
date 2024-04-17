@@ -3,6 +3,7 @@ package at.jku.dke.task_app.datalog.services;
 import at.jku.dke.etutor.task_app.dto.ModifyTaskGroupDto;
 import at.jku.dke.etutor.task_app.dto.TaskGroupModificationResponseDto;
 import at.jku.dke.etutor.task_app.services.BaseTaskGroupService;
+import at.jku.dke.task_app.datalog.config.DatalogSettings;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskGroupDto;
@@ -29,6 +30,7 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
     private static final String VARIABLE_NAMES = "XYZUVWABCDEFGHIJKLMNOPQRST";
     private final MessageSource messageSource;
     private final DatalogExecutor executor;
+    private final DatalogSettings settings;
 
     /**
      * Creates a new instance of class {@link DatalogTaskGroupService}.
@@ -36,11 +38,13 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
      * @param repository    The task group repository.
      * @param messageSource The message source.
      * @param executor      The datalog executor.
+     * @param settings      The datalog settings.
      */
-    public DatalogTaskGroupService(DatalogTaskGroupRepository repository, MessageSource messageSource, DatalogExecutor executor) {
+    public DatalogTaskGroupService(DatalogTaskGroupRepository repository, MessageSource messageSource, DatalogExecutor executor, DatalogSettings settings) {
         super(repository);
         this.messageSource = messageSource;
         this.executor = executor;
+        this.settings = settings;
     }
 
     @Override
@@ -112,8 +116,18 @@ public class DatalogTaskGroupService extends BaseTaskGroupService<DatalogTaskGro
 
         String id = HashIds.encode(taskGroup.getId());
         return new TaskGroupModificationResponseDto(
-            this.messageSource.getMessage("defaultTaskGroupDescription", new Object[]{list.toString(), id}, Locale.GERMAN),
-            this.messageSource.getMessage("defaultTaskGroupDescription", new Object[]{list.toString(), id}, Locale.ENGLISH));
+            this.messageSource.getMessage("defaultTaskGroupDescription", new Object[]{list.toString(), this.settings.docUrl(), id}, Locale.GERMAN),
+            this.messageSource.getMessage("defaultTaskGroupDescription", new Object[]{list.toString(), this.settings.docUrl(), id}, Locale.ENGLISH));
+    }
+
+    /**
+     * Returns the public URL of the diagnose facts for the specified task group.
+     *
+     * @param id The task group identifier.
+     * @return The public URL.
+     */
+    public String getPublicUrl(long id) {
+        return this.settings.docUrl() + HashIds.encode(id);
     }
 
     /**

@@ -51,3 +51,4 @@ spring:
 #  exe: ./bin/dlv-mac-m1 # Adjust to your OS
 #  maxExecutionTime: 10 # seconds
 #  factEncodingSuffix: 0
+#  doc-url: https://etutor.dke.uni-linz.ac.at/api/forwardPublic/datalog/dlg/

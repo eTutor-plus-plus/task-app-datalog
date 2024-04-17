@@ -13,18 +13,15 @@ import java.nio.file.Path;
  * @param exe                The path to the Datalog executable (if the String is empty, the executable is determined automatically from the Operating System).
  * @param maxExecutionTime   The maximum execution time in seconds.
  * @param factEncodingSuffix The suffix for the fact encoding.
+ * @param docUrl The public facts URL.
  */
 @Validated
 @ConfigurationProperties(prefix = "datalog")
-public record DatalogSettings(@NotNull String exe, @Min(1) int maxExecutionTime, @NotNull String factEncodingSuffix) {
+public record DatalogSettings(@NotNull String exe, @Min(1) int maxExecutionTime, @NotNull String factEncodingSuffix, @NotNull String docUrl) {
     /**
-     * Creates a new instance of class {@linkplain DatalogSettings}.
-     * <p>
-     * This constructor is mainly used for testing/development purposes.
+     * Empty datalog settings for testing purposes.
      */
-    public DatalogSettings() {
-        this("", 10, "0");
-    }
+    public static final DatalogSettings EMPTY = new DatalogSettings("", 10, "0", "http://localhost:8081/dlg/");
 
     /**
      * Returns the path to the Datalog executable.

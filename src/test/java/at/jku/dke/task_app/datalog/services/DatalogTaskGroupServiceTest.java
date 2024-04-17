@@ -2,6 +2,7 @@ package at.jku.dke.task_app.datalog.services;
 
 import at.jku.dke.etutor.task_app.dto.ModifyTaskGroupDto;
 import at.jku.dke.etutor.task_app.dto.TaskStatus;
+import at.jku.dke.task_app.datalog.config.DatalogSettings;
 import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.dto.ModifyDatalogTaskGroupDto;
 import at.jku.dke.task_app.datalog.evaluation.DatalogExecutorImpl;
@@ -31,7 +32,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
 
         // Act
         var result = service.createTaskGroup(1, dto);
@@ -46,7 +47,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("xquery", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
 
         // Act & Assert
         assertThrows(ResponseStatusException.class, () -> service.createTaskGroup(1, dto));
@@ -57,7 +58,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
 
         // Act & Assert
@@ -69,7 +70,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         when(exec.execute(anyString(), any())).thenThrow(new ExecutionException("Some problem."));
 
         // Act & Assert
@@ -83,7 +84,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
 
         // Act
@@ -99,7 +100,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("diagnose", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("diagnose", "person(mike).");
 
         // Act
@@ -115,7 +116,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "submit"));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("person(steve).", "submit");
 
         // Act
@@ -131,7 +132,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("xquery", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
 
         // Act & Assert
@@ -143,7 +144,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
         when(exec.execute(anyString(), any())).thenThrow(new SyntaxException("Invalid syntax."));
 
@@ -156,7 +157,7 @@ class DatalogTaskGroupServiceTest {
         // Arrange
         var dto = new ModifyTaskGroupDto<>("datalog", TaskStatus.APPROVED, new ModifyDatalogTaskGroupDto("person(mike).", "person(steve)."));
         var exec = mock(DatalogExecutorImpl.class);
-        var service = new DatalogTaskGroupService(null, null, exec);
+        var service = new DatalogTaskGroupService(null, null, exec, null);
         var taskGroup = new DatalogTaskGroup("diagnose", "submit");
         when(exec.execute(anyString(), any())).thenThrow(new IOException("Some error."));
 
@@ -169,7 +170,7 @@ class DatalogTaskGroupServiceTest {
     void mapToReturnData() {
         // Arrange
         MessageSource ms = mock(MessageSource.class);
-        var service = new DatalogTaskGroupService(null, ms, null);
+        var service = new DatalogTaskGroupService(null, ms, null, DatalogSettings.EMPTY);
         var taskGroup = new DatalogTaskGroup("""
             empty.
             person(mike).
@@ -178,7 +179,7 @@ class DatalogTaskGroupServiceTest {
             somePredicateWithALotOfArguments(1, ab, 5,cd,   435, 234,de,td).
             """, "submit");
         taskGroup.setId(55L);
-        when(ms.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(i -> i.getArgument(1, Object[].class)[1] + ":::" + i.getArgument(1, Object[].class)[0]);
+        when(ms.getMessage(anyString(), any(), any(Locale.class))).thenAnswer(i -> i.getArgument(1, Object[].class)[2] + ":::" + i.getArgument(1, Object[].class)[0]);
 
         // Act
         var result = service.mapToReturnData(taskGroup, true);

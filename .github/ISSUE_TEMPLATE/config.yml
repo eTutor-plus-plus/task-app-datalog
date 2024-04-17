@@ -3,3 +3,6 @@ contact_links:
   - name: Contribution Details
     url: https://github.com/eTutor-plus-plus/task-app-datalog/blob/main/CONTRIBUTING.md
     about: Before opening a new issue, please make sure to read CONTRIBUTING.md
+  - name: Documentation
+    url: https://github.com/eTutor-plus-plus/task-app-datalog/wiki
+    about: Before opening a new issue, please make sure to read the documentation.

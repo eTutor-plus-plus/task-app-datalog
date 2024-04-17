@@ -31,6 +31,7 @@ docker run -p 8090:8081 \
   -e CLIENTS_API_KEYS_2_ROLES_0=READ_SUBMISSION \
   -e DATALOG_MAX_EXECUTION_TIME=10 \
   -e DATALOG_FACT_ENCODING_SUFFIX=0A \
+  -e DATALOG_DOC_URL=https://etutor.dke.uni-linz.ac.at/api/forwardPublic/datalog/dlg/
   etutorplusplus/task-app-datalog
 ```
 
@@ -64,6 +65,7 @@ services:
             CLIENTS_API_KEYS_2_ROLES_0: READ_SUBMISSION
             DATALOG_MAX_EXECUTION_TIME: 10
             DATALOG_FACT_ENCODING_SUFFIX: 0A
+            DATALOG_DOC_URL: https://etutor.dke.uni-linz.ac.at/api/forwardPublic/datalog/dlg/
 ```
 
 ### Environment Variables
@@ -77,17 +79,18 @@ In production environment, the application requires two database users:
 
 The users must be configured via environment variables. The clients have to be configured via environment variables as well (`X`/`Y` stands for a 0-based index).
 
-| Variable                       | Description                                            |
-|--------------------------------|--------------------------------------------------------|
-| `SERVER_PORT`                  | The server port.                                       |
-| `SPRING_DATASOURCE_URL`        | JDBC-URL to the database                               |
-| `SPRING_DATASOURCE_USERNAME`   | The username of the JPA user.                          |
-| `SPRING_DATASOURCE_PASSWORD`   | The password of the JPA user.                          |
-| `SPRING_FLYWAY_USER`           | The username of the database administrator user.       |
-| `SPRING_FLYWAY_PASSWORD`       | The password of the database administrator user.       |
-| `CLIENTS_API_KEYS_X_NAME`      | The name of the client.                                |
-| `CLIENTS_API_KEYS_X_KEY`       | The API key of the client.                             |
-| `CLIENTS_API_KEYS_X_ROLES_Y`   | The role of the client.                                |
-| `DATALOG_EXE`                  | The path to the DLV exe (if different than default).   |
-| `DATALOG_MAX_EXECUTION_TIME`   | The maximum allowed execution time of the DLV process. |
-| `DATALOG_FACT_ENCODING_SUFFIX` | The suffix to append to facts.                         |
+| Variable                       | Description                                                                                                                      |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `SERVER_PORT`                  | The server port.                                                                                                                 |
+| `SPRING_DATASOURCE_URL`        | JDBC-URL to the database                                                                                                         |
+| `SPRING_DATASOURCE_USERNAME`   | The username of the JPA user.                                                                                                    |
+| `SPRING_DATASOURCE_PASSWORD`   | The password of the JPA user.                                                                                                    |
+| `SPRING_FLYWAY_USER`           | The username of the database administrator user.                                                                                 |
+| `SPRING_FLYWAY_PASSWORD`       | The password of the database administrator user.                                                                                 |
+| `CLIENTS_API_KEYS_X_NAME`      | The name of the client.                                                                                                          |
+| `CLIENTS_API_KEYS_X_KEY`       | The API key of the client.                                                                                                       |
+| `CLIENTS_API_KEYS_X_ROLES_Y`   | The role of the client.                                                                                                          |
+| `DATALOG_EXE`                  | The path to the DLV exe (if different than default).                                                                             |
+| `DATALOG_MAX_EXECUTION_TIME`   | The maximum allowed execution time of the DLV process.                                                                           |
+| `DATALOG_FACT_ENCODING_SUFFIX` | The suffix to append to facts.                                                                                                   |
+| `DATALOG_DOC_URL`              | The public URL where the datalog facts can be viewed. The URL must end with a slash. The ID will be appended by the application. |
