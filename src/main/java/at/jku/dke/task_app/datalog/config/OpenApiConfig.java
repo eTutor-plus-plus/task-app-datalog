@@ -12,6 +12,6 @@ public class OpenApiConfig extends BaseOpenApiConfig {
      * Creates a new instance of class {@link OpenApiConfig}.
      */
     public OpenApiConfig() {
-        super("eTutor - Datalog API", "API for tasks of type <code>datalog</code>", "dev");
+        super("eTutor - Datalog API", "API for tasks of type <code>datalog</code> and <code>asp</code>", "dev");
     }
 }

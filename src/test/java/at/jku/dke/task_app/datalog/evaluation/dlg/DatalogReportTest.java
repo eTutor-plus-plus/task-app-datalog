@@ -140,7 +140,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertTrue(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -194,7 +194,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
     //#endregion
 
@@ -237,7 +237,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -278,7 +278,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -319,7 +319,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
     //#endregion
 
@@ -362,7 +362,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -403,7 +403,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -444,7 +444,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
     //#endregion
 
@@ -486,7 +486,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -526,7 +526,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
 
     @Test
@@ -566,7 +566,7 @@ class DatalogReportTest {
         assertEquals("Result", c.name());
         assertNull(c.points());
         assertFalse(c.passed());
-        assertEquals("<pre>rawOutput</pre>", c.feedback());
+        assertEquals("<div style=\"font-family: monospace;\">rawOutput</div>", c.feedback());
     }
     //#endregion
 }
