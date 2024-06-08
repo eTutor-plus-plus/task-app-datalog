@@ -82,7 +82,7 @@ public class DatalogReport {
 
         // Semantics
         this.createCriterion("missingPredicates", GradingEntry.MISSING_PREDICATE, analysis::getMissingPredicates).ifPresent(criteria::add);
-        this.createCriterion("missingFacts", GradingEntry.MISSING_PREDICATE, analysis::getMissingFacts).ifPresent(criteria::add);
+        this.createCriterion("missingFacts", GradingEntry.MISSING_FACT, analysis::getMissingFacts).ifPresent(criteria::add);
         this.createCriterion("superfluousFacts", GradingEntry.SUPERFLUOUS_FACT, analysis::getSuperfluousFacts).ifPresent(criteria::add);
 
         // Execution result
