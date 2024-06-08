@@ -30,7 +30,7 @@ docker run -p 8090:8081 \
   -e CLIENTS_API_KEYS_2_KEY=adf455jfil45646 \
   -e CLIENTS_API_KEYS_2_ROLES_0=READ_SUBMISSION \
   -e DATALOG_MAX_EXECUTION_TIME=10 \
-  -e DATALOG_FACT_ENCODING_SUFFIX=0A \
+  -e DATALOG_FACT_ENCODING_SUFFIX=0 \
   -e DATALOG_DOC_URL=https://etutor.dke.uni-linz.ac.at/api/forwardPublic/datalog/dlg/
   etutorplusplus/task-app-datalog
 ```
@@ -64,7 +64,7 @@ services:
             CLIENTS_API_KEYS_2_KEY: adf455jfil45646
             CLIENTS_API_KEYS_2_ROLES_0: READ_SUBMISSION
             DATALOG_MAX_EXECUTION_TIME: 10
-            DATALOG_FACT_ENCODING_SUFFIX: 0A
+            DATALOG_FACT_ENCODING_SUFFIX: 0
             DATALOG_DOC_URL: https://etutor.dke.uni-linz.ac.at/api/forwardPublic/datalog/dlg/
 ```
 
@@ -92,5 +92,5 @@ The users must be configured via environment variables. The clients have to be c
 | `CLIENTS_API_KEYS_X_ROLES_Y`   | The role of the client.                                                                                                          |
 | `DATALOG_EXE`                  | The path to the DLV exe (if different than default).                                                                             |
 | `DATALOG_MAX_EXECUTION_TIME`   | The maximum allowed execution time of the DLV process.                                                                           |
-| `DATALOG_FACT_ENCODING_SUFFIX` | The suffix to append to facts.                                                                                                   |
+| `DATALOG_FACT_ENCODING_SUFFIX` | The suffix to append to facts (may only contain digits).                                                                         |
 | `DATALOG_DOC_URL`              | The public URL where the datalog facts can be viewed. The URL must end with a slash. The ID will be appended by the application. |

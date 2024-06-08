@@ -77,7 +77,7 @@ public class AspEvaluationService implements EvaluationService<AspSubmissionDto>
                 this.messageSource.getMessage("criterium.syntax", null, locale),
                 null,
                 false,
-                "<pre>" + HtmlUtils.htmlEscape(ex.getMessage()) + "</pre>"));
+                "<pre>" + HtmlUtils.htmlEscape(ex.getMessage().replaceFirst("line \\d+: ", "").trim()) + "</pre>"));
             return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, this.messageSource.getMessage("syntaxError", null, locale), criteria);
         } catch (ExecutionException | IOException ex) {
             LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);

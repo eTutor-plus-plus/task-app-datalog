@@ -21,7 +21,7 @@ springdoc:
 datalog:
   exe:
   maxExecutionTime: 10 # seconds
-  factEncodingSuffix: a1
+  factEncodingSuffix: 1
   doc-url: http://localhost:8080/api/forwardPublic/datalog/dlg/
 
 # API key definition

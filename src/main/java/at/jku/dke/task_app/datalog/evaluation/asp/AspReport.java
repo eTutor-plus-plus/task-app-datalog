@@ -36,7 +36,7 @@ public class AspReport {
 
         this.messageSource = messageSource;
         this.locale = locale;
-        this.feedbackLevel = feedbackLevel;
+        this.feedbackLevel = mode == SubmissionMode.SUBMIT ? (feedbackLevel == 0 ? 0 : 1) : feedbackLevel;
         this.analysis = analysis;
         this.mode = mode;
         this.rawOutput = rawOutput;
@@ -141,8 +141,11 @@ public class AspReport {
         for (var pred : predicates) {
             sb.append("{");
             for (var p : pred) {
-                sb.append(p);
+                for (var f : p.getFacts()) {
+                    sb.append(f).append(", ");
+                }
             }
+            sb.delete(sb.length() - 2, sb.length());
             sb.append("}\n");
         }
         return sb.append("</pre>").toString();

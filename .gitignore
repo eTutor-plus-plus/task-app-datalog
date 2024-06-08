@@ -5,6 +5,7 @@
 .idea/**/dictionaries
 .idea/**/shelf
 .idea/jpa-buddy.xml
+.idea/jpa.xml
 .idea/misc.xml
 .idea/vcs.xml
 .idea/**/contentModel.xml
