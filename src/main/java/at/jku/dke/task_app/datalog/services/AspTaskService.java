@@ -7,11 +7,14 @@ import at.jku.dke.task_app.datalog.data.entities.DatalogTaskGroup;
 import at.jku.dke.task_app.datalog.data.repositories.AspTaskRepository;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskGroupRepository;
 import at.jku.dke.task_app.datalog.dto.AspSubmissionDto;
+import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.dto.ModifyAspTaskDto;
 import at.jku.dke.task_app.datalog.evaluation.asp.AspEvaluationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 /**
  * This class provides methods for managing {@link AspTask}s.
@@ -57,16 +60,36 @@ public class AspTaskService extends BaseTaskInGroupService<AspTask, DatalogTaskG
 
     @Override
     protected void afterCreate(AspTask task, ModifyTaskDto<ModifyAspTaskDto> dto) {
+        // Validate grading
         var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new AspSubmissionDto(task.getSolution())));
         if (!result.points().equals(result.maxPoints()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
+
+        // Validate not empty solution on diagnose and submit facts
+        var executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.output().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode DIAGNOSE is empty!");
+
+        executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.SUBMIT, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.output().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode SUBMIT is empty!");
     }
 
     @Override
     protected void afterUpdate(AspTask task, ModifyTaskDto<ModifyAspTaskDto> dto) {
+        // Validate grading
         var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new AspSubmissionDto(task.getSolution())));
         if (!result.points().equals(result.maxPoints()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
+
+        // Validate not empty solution on diagnose and submit facts
+        var executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.output().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode DIAGNOSE is empty!");
+
+        executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.SUBMIT, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.output().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode SUBMIT is empty!");
     }
 
     private static String convertGradingDtoToString(GradingDto grading) {

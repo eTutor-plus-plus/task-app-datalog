@@ -69,16 +69,36 @@ public class DatalogTaskService extends BaseTaskInGroupService<DatalogTask, Data
 
     @Override
     protected void afterCreate(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> dto) {
+        // Validate grading
         var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
         if (!result.points().equals(result.maxPoints()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
+
+        // Validate not empty solution on diagnose and submit facts
+        var executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.result().values().stream().anyMatch(List::isEmpty))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode DIAGNOSE is empty!");
+
+        executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.SUBMIT, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.result().values().stream().anyMatch(List::isEmpty))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode SUBMIT is empty!");
     }
 
     @Override
     protected void afterUpdate(DatalogTask task, ModifyTaskDto<ModifyDatalogTaskDto> dto) {
+        // Validate grading
         var result = this.evaluationService.evaluate(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
         if (!result.points().equals(result.maxPoints()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, convertGradingDtoToString(result));
+
+        // Validate not empty solution on diagnose and submit facts
+        var executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.DIAGNOSE, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.result().values().stream().anyMatch(List::isEmpty))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode DIAGNOSE is empty!");
+
+        executionResult = this.evaluationService.execute(new SubmitSubmissionDto<>("task-admin", "task-create", task.getId(), "en", SubmissionMode.SUBMIT, 3, new DatalogSubmissionDto(task.getSolution())));
+        if (executionResult.result().values().stream().anyMatch(List::isEmpty))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query result for mode SUBMIT is empty!");
     }
 
     /**
