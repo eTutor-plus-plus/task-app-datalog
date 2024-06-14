@@ -6,6 +6,7 @@ import at.jku.dke.etutor.task_app.dto.SubmissionMode;
 import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.repositories.AspTaskRepository;
 import at.jku.dke.task_app.datalog.dto.AspSubmissionDto;
+import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
 import at.jku.dke.task_app.datalog.evaluation.EvaluationService;
 import at.jku.dke.task_app.datalog.evaluation.asp.analysis.AspAnalysisImpl;
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Service that evaluates ASP submissions.
@@ -105,6 +107,39 @@ public class AspEvaluationService implements EvaluationService<AspSubmissionDto>
         } catch (AnalysisException ex) {
             LOG.error("Error while analyzing query result for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while analysing query result for task " + submission.taskId(), ex);
+        }
+    }
+
+    /**
+     * Executes the submission and returns the query result.
+     *
+     * @param submission The submission data.
+     * @return The query result.
+     * @throws ResponseStatusException If an error occurs.
+     */
+    @Override
+    public DatalogExecutor.ExecutionResult execute(SubmitSubmissionDto<DatalogSubmissionDto> submission) {
+        // find task
+        var task = this.taskRepository.findByIdWithTaskGroup(submission.taskId())
+            .orElseThrow(() -> new EntityNotFoundException("Task " + submission.taskId() + " does not exist."));
+
+        // prepare
+        LOG.info("Executing input for asp-task {} with mode {}", submission.taskId(), submission.mode());
+
+        String facts = submission.mode() == SubmissionMode.SUBMIT ?
+            task.getTaskGroup().getSubmissionFacts() :
+            task.getTaskGroup().getDiagnoseFacts();
+
+        // execute submission
+        try {
+            String result = this.executor.execute(facts, submission.submission().input(), task.getMaxN());
+            return new DatalogExecutor.ExecutionResult(result, Map.of());
+        } catch (SyntaxException ex) {
+            LOG.error("Error while executing input for task {}", submission.taskId(), ex);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (ExecutionException | IOException ex) {
+            LOG.error("Error while executing input for task {}", submission.taskId(), ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while executing input for task " + submission.taskId(), ex);
         }
     }
 }

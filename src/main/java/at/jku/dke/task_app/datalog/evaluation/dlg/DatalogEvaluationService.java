@@ -7,7 +7,6 @@ import at.jku.dke.etutor.task_app.dto.SubmitSubmissionDto;
 import at.jku.dke.task_app.datalog.data.repositories.DatalogTaskRepository;
 import at.jku.dke.task_app.datalog.dto.DatalogSubmissionDto;
 import at.jku.dke.task_app.datalog.evaluation.DatalogExecutor;
-import at.jku.dke.task_app.datalog.evaluation.DatalogExecutorImpl;
 import at.jku.dke.task_app.datalog.evaluation.EvaluationService;
 import at.jku.dke.task_app.datalog.evaluation.dlg.analysis.DatalogAnalysisImpl;
 import at.jku.dke.task_app.datalog.evaluation.dlg.grading.DatalogGrading;
@@ -109,6 +108,32 @@ public class DatalogEvaluationService implements EvaluationService<DatalogSubmis
         } catch (AnalysisException ex) {
             LOG.error("Error while analyzing query result for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while analysing query result for task " + submission.taskId(), ex);
+        }
+    }
+
+    @Override
+    public DatalogExecutor.ExecutionResult execute(SubmitSubmissionDto<DatalogSubmissionDto> submission) {
+        // find task
+        var task = this.taskRepository.findByIdWithTaskGroup(submission.taskId())
+            .orElseThrow(() -> new EntityNotFoundException("Task " + submission.taskId() + " does not exist."));
+
+        // prepare
+        LOG.info("Executing input for task {} with mode {}", submission.taskId(), submission.mode());
+
+        String facts = submission.mode() == SubmissionMode.SUBMIT ?
+            task.getTaskGroup().getSubmissionFacts() :
+            task.getTaskGroup().getDiagnoseFacts();
+        boolean encodeFacts = submission.mode() == SubmissionMode.SUBMIT;
+
+        // execute
+        try {
+            return this.executor.query(facts, submission.submission().input(), task.getQuery(), task.getUncheckedTerms(), encodeFacts);
+        } catch (SyntaxException ex) {
+            LOG.error("Error while executing input for task {}", submission.taskId(), ex);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (ExecutionException | IOException ex) {
+            LOG.error("Error while executing input for task {}", submission.taskId(), ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while executing input for task " + submission.taskId(), ex);
         }
     }
 }

@@ -81,9 +81,9 @@ public class DatalogReport {
             this.messageSource.getMessage("criterium.syntax.valid", null, locale)));
 
         // Semantics
-        this.createCriterion("missingPredicates", GradingEntry.MISSING_PREDICATE, analysis::getMissingPredicates).ifPresent(criteria::add);
-        this.createCriterion("missingFacts", GradingEntry.MISSING_FACT, analysis::getMissingFacts).ifPresent(criteria::add);
-        this.createCriterion("superfluousFacts", GradingEntry.SUPERFLUOUS_FACT, analysis::getSuperfluousFacts).ifPresent(criteria::add);
+        this.createCriterion("missingPredicates", GradingEntry.MISSING_PREDICATE, analysis::getMissingPredicates, true).ifPresent(criteria::add);
+        this.createCriterion("missingFacts", GradingEntry.MISSING_FACT, analysis::getMissingFacts, false).ifPresent(criteria::add);
+        this.createCriterion("superfluousFacts", GradingEntry.SUPERFLUOUS_FACT, analysis::getSuperfluousFacts, false).ifPresent(criteria::add);
 
         // Execution result
         if (this.mode != SubmissionMode.SUBMIT) {
@@ -98,12 +98,12 @@ public class DatalogReport {
         return criteria;
     }
 
-    private Optional<CriterionDto> createCriterion(String translationKey, String errorCategory, Supplier<List<?>> listSupplier) {
-        if (this.mode == SubmissionMode.RUN)
+    private Optional<CriterionDto> createCriterion(String translationKey, String errorCategory, Supplier<List<?>> listSupplier, boolean showOnRun) {
+        if (this.mode == SubmissionMode.RUN && !showOnRun)
             return Optional.empty();
         if (listSupplier.get().isEmpty())
             return Optional.empty();
-        if (this.mode == SubmissionMode.SUBMIT)
+        if (this.mode == SubmissionMode.SUBMIT || this.mode == SubmissionMode.RUN)
             return Optional.of(new CriterionDto(
                 this.messageSource.getMessage("criterium." + translationKey, null, locale),
                 this.grading.getDetails(errorCategory).map(e -> e.minusPoints().negate()).orElse(null),

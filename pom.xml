@@ -12,7 +12,7 @@
 
     <groupId>at.jku.dke.etutor</groupId>
     <artifactId>task-app-datalog</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 
     <name>eTutor Task-App: Datalog</name>
     <description>eTutor Task-App for task type "datalog"</description>
