@@ -82,7 +82,18 @@ public class DatalogEvaluationService implements EvaluationService<DatalogSubmis
                 false,
                 "<pre>" + HtmlUtils.htmlEscape(ex.getMessage().replaceFirst("line \\d+: ", "").trim()) + "</pre>"));
             return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, this.messageSource.getMessage("syntaxError", null, locale), criteria);
-        } catch (ExecutionException | IOException ex) {
+        } catch (ExecutionException ex) {
+            LOG.warn("Syntax error in input for task {}", submission.taskId());
+            List<CriterionDto> criteria = new ArrayList<>();
+            criteria.add(new CriterionDto(
+                this.messageSource.getMessage("criterium.syntax", null, locale),
+                null,
+                false,
+                "<pre>" + HtmlUtils.htmlEscape(ex.getMessage().replaceFirst("line \\d+: ", "").trim()) + "</pre>"));
+
+            LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
+            return new GradingDto(task.getMaxPoints(), BigDecimal.ZERO, this.messageSource.getMessage("syntaxError", null, locale), criteria);
+        } catch ( IOException ex){
             LOG.error("Error while evaluating input for task {}", submission.taskId(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while evaluating input for task " + submission.taskId(), ex);
         }

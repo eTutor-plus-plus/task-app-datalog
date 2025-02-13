@@ -36,7 +36,7 @@ public record DatalogSettings(@NotNull String exe, @Min(1) int maxExecutionTime,
             var workingDir = Path.of(System.getProperty("user.dir"));
 
             if (System.getProperty("os.name").toLowerCase().contains("windows"))
-                return workingDir.resolve("bin/dlv-win.exe").toString();
+                return workingDir.resolve("bin/dlv-windows.exe").toString();
             if (System.getProperty("os.name").toLowerCase().contains("mac"))
                 return workingDir.resolve("bin/dlv-mac-m1").toString();
             if (System.getProperty("os.name").toLowerCase().contains("linux"))
